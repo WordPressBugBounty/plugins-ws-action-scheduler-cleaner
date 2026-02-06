@@ -1,0 +1,218 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: WS Action Scheduler Cleaner\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-10-10 12:00+0000\n"
+"PO-Revision-Date: 2025-11-24 18:00+0100\n"
+"Last-Translator: Marco Brack <mbrack@winning-solutions.de>\n"
+"Language-Team: \n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.8\n"
+
+msgid "WS Action Scheduler Cleaner"
+msgstr "WS Action Scheduler Cleaner"
+
+msgid "This tool allows you to clean up the Action Scheduler tables in your WordPress database. Action Scheduler is a library used by many plugins to schedule background tasks."
+msgstr "Dieses Tool ermöglicht es Ihnen, die Action Scheduler-Tabellen in Ihrer WordPress-Datenbank zu bereinigen. Action Scheduler ist eine Bibliothek, die von vielen Plugins zur Planung von Hintergrundaufgaben verwendet wird."
+
+msgid "Please wait..."
+msgstr "Bitte warten Sie..."
+
+msgid "Loading..."
+msgstr "Wird geladen..."
+
+msgid "The Action Scheduler uses two main tables:"
+msgstr "Der Action Scheduler verwendet zwei Haupttabellen:"
+
+msgid "Actions Table: Stores scheduled actions and their statuses."
+msgstr "Aktionstabelle: Speichert geplante Aktionen und deren Status."
+
+msgid "Logs Table: Stores logs of action executions."
+msgstr "Protokolltabelle: Speichert Protokolle von Aktionsausführungen."
+
+msgid "Clearing these tables is generally safe and can improve database performance. However, please note:"
+msgstr "Das Bereinigen dieser Tabellen ist im Allgemeinen sicher und kann die Datenbankleistung verbessern. Bitte beachten Sie jedoch:"
+
+msgid "Clearing can take a while depending on the size of the tables."
+msgstr "Die Bereinigung kann je nach Größe der Tabellen eine Weile dauern."
+
+msgid "Cleared data will be permanently deleted."
+msgstr "Bereinigte Daten werden dauerhaft gelöscht."
+
+msgid "It's recommended to <strong>make a backup</strong> before proceeding."
+msgstr "Es wird empfohlen, vor dem Fortfahren ein <strong>Backup zu erstellen</strong>."
+
+msgid "Clearing completed, failed, or canceled actions usually doesn't affect WordPress functionality."
+msgstr "Das Bereinigen von abgeschlossenen, fehlgeschlagenen oder abgebrochenen Aktionen beeinträchtigt normalerweise nicht die WordPress-Funktionalität."
+
+msgid "For more information, visit the <a href=\"%s\">Action Scheduler admin page</a>."
+msgstr "Weitere Informationen finden Sie auf der <a href=\"%s\">Action Scheduler-Administrationsseite</a>."
+
+msgid "Current Table Sizes:"
+msgstr "Aktuelle Tabellengrößen:"
+
+msgid "Actions table:"
+msgstr "Aktionstabelle:"
+
+msgid "rows"
+msgstr "Zeilen"
+
+msgid "Logs table:"
+msgstr "Protokolltabelle:"
+
+msgid "Clear Action Statuses"
+msgstr "Aktionsstatus bereinigen"
+
+msgid "Select which action statuses to clear:"
+msgstr "Wählen Sie aus, welche Aktionsstatus bereinigt werden sollen:"
+
+msgid "Complete"
+msgstr "Abgeschlossen"
+
+msgid "Failed"
+msgstr "Fehlgeschlagen"
+
+msgid "Canceled"
+msgstr "Abgebrochen"
+
+msgid "Clear Selected Actions"
+msgstr "Ausgewählte Aktionen bereinigen"
+
+msgid "Clear Logs Table"
+msgstr "Protokolltabelle bereinigen"
+
+msgid "This will clear all entries in the logs table."
+msgstr "Dies wird alle Einträge in der Protokolltabelle löschen."
+
+msgid "Clear Logs"
+msgstr "Protokolle bereinigen"
+
+msgid "Scheduling Options"
+msgstr "Planungsoptionen"
+
+msgid "Set up automatic clearing schedules for selected statuses (set to 0 to clean fully; leave empty to disable automatic clearing):"
+msgstr "Richten Sie automatische Bereinigungspläne für ausgewählte Status ein (auf 0 setzen, um vollständig zu bereinigen; leer lassen, um die automatische Bereinigung zu deaktivieren):"
+
+msgid "Clear logs older than:"
+msgstr "Protokolle bereinigen, die älter sind als:"
+
+msgid "days"
+msgstr "Tage"
+
+msgid "Clear action statuses older than:"
+msgstr "Aktionsstatus bereinigen, die älter sind als:"
+
+msgid "Save Schedule"
+msgstr "Zeitplan speichern"
+
+msgid "Powered by Winning Solutions"
+msgstr "Powered by Winning Solutions"
+
+msgid "Selected actions cleared successfully!"
+msgstr "Ausgewählte Aktionen erfolgreich bereinigt!"
+
+msgid "Logs cleared successfully!"
+msgstr "Protokolle erfolgreich bereinigt!"
+
+msgid "Schedule saved successfully!"
+msgstr "Zeitplan erfolgreich gespeichert!"
+
+msgid "Statuses saved successfully!"
+msgstr "Status erfolgreich gespeichert!"
+
+msgid "Settings"
+msgstr "Einstellungen"
+
+msgid "Action Scheduler tables do not exist. Please ensure Action Scheduler is properly installed and activated."
+msgstr "Die Action-Scheduler-Tabellen existieren nicht. Bitte stellen Sie sicher, dass Action Scheduler ordnungsgemäß installiert und aktiviert ist."
+
+msgid "Please select at least one status to clear."
+msgstr "Bitte wählen Sie mindestens einen Status zum Bereinigen aus."
+
+msgid "Clearing in progress..."
+msgstr "Bereinigung läuft..."
+
+msgid "An error occurred. Please try again."
+msgstr "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut."
+
+msgid "Optimize Tables"
+msgstr "Tabellen optimieren"
+
+msgid "Optimize the database tables to reclaim unused space and potentially improve performance."
+msgstr "Optimiere die Datenbanktabellen, um ungenutzten Speicherplatz freizugeben und möglicherweise die Leistung zu verbessern."
+
+msgid "Optimize Actions Table"
+msgstr "Aktionstabelle optimieren"
+
+msgid "Optimize Logs Table"
+msgstr "Protokolltabelle optimieren"
+
+msgid "Optimizing table..."
+msgstr "Tabelle wird optimiert..."
+
+msgid "%s table optimized successfully!"
+msgstr "%s-Tabelle erfolgreich optimiert!"
+
+msgid "Table optimization failed."
+msgstr "Tabellenoptimierung fehlgeschlagen."
+
+msgid "Table does not exist."
+msgstr "Tabelle existiert nicht."
+
+msgid "Invalid table type."
+msgstr "Ungültiger Tabellentyp."
+
+msgid "Insufficient permissions."
+msgstr "Unzureichende Berechtigungen."
+
+msgid "Setting the \"Cleanup Schedule\" will activate the plugin's own cleaning system, a high-throughput system with moderate server resource usage best suited for less busy times of the day. The \"Retention Period\" for actions cleanup affects both the plugin's and Action Scheduler's cleanup systems. Action Scheduler's own retention period only concerns the actions table and runs continuously in the background with low server resource usage. The \"Retention Period\" for logs cleanup only affects the plugin's cleanup system, as Action Scheduler does not have its own mechanism for cleaning logs."
+msgstr "Das Setzen des \"Bereinigungszeitplans\" aktiviert das eigene Bereinigungssystem des Plugins, ein System mit hohem Durchsatz und moderatem Serverressourcenverbrauch, das am besten für weniger ausgelastete Tageszeiten geeignet ist. Die \"Aufbewahrungsfrist\" für die Bereinigung von Aktionen wirkt sich sowohl auf das Plugin- als auch auf das Action Scheduler-Bereinigungssystem aus. Die eigene Aufbewahrungsfrist von Action Scheduler betrifft nur die Aktionstabelle und läuft kontinuierlich im Hintergrund mit geringem Serverressourcenverbrauch. Die \"Aufbewahrungsfrist\" für die Bereinigung von Protokollen wirkt sich nur auf das Bereinigungssystem des Plugins aus, da Action Scheduler keinen eigenen Mechanismus zur Bereinigung von Protokollen hat."
+
+msgid "Action Statuses"
+msgstr "Aktionsstatus"
+
+msgid "Cleanup Schedule:"
+msgstr "Bereinigungszeitplan:"
+
+msgid "How often to run cleanup (empty or 0 = disabled, 1-365 days)."
+msgstr "Wie oft die Bereinigung ausgeführt werden soll (leer oder 0 = deaktiviert, 1-365 Tage)."
+
+msgid "Schedule Time:"
+msgstr "Zeitplan:"
+
+msgid "Time of day to run cleanup (uses WordPress timezone)."
+msgstr "Tageszeit für die Bereinigung (verwendet WordPress-Zeitzone)."
+
+msgid "Retention Period:"
+msgstr "Aufbewahrungsfrist:"
+
+msgid "Delete action statuses older than this (0 = delete all matching statuses, required field)."
+msgstr "Aktionsstatus löschen, die älter sind als dies (0 = alle passenden Status löschen, Pflichtfeld)."
+
+msgid "Logs"
+msgstr "Protokolle"
+
+msgid "Delete logs older than this (0 = delete all logs, required field)."
+msgstr "Protokolle löschen, die älter sind als dies (0 = alle Protokolle löschen, Pflichtfeld)."
+
+msgid "Actions schedule interval must be empty or between 1 and 365 days."
+msgstr "Das Intervall für den Aktionszeitplan muss leer sein oder zwischen 1 und 365 Tagen liegen."
+
+msgid "Logs schedule interval must be empty or between 1 and 365 days."
+msgstr "Das Intervall für den Protokollzeitplan muss leer sein oder zwischen 1 und 365 Tagen liegen."
+
+msgid "Actions schedule time must be in HH:MM format."
+msgstr "Die Zeit für den Aktionszeitplan muss im Format HH:MM angegeben werden."
+
+msgid "Logs schedule time must be in HH:MM format."
+msgstr "Die Zeit für den Protokollzeitplan muss im Format HH:MM angegeben werden."
+
+msgid "Actions retention period is required and must be between 0 and 365 days."
+msgstr "Die Aufbewahrungsfrist für Aktionen ist erforderlich und muss zwischen 0 und 365 Tagen liegen."
+
+msgid "Logs retention period is required and must be between 0 and 365 days."
+msgstr "Die Aufbewahrungsfrist für Protokolle ist erforderlich und muss zwischen 0 und 365 Tagen liegen."

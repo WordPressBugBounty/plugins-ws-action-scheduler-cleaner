@@ -1,0 +1,276 @@
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: WS Action Scheduler Cleaner\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-10-10 12:00+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: ws-action-scheduler-cleaner.php:3
+#: ws-action-scheduler-cleaner.php:156
+msgid "WS Action Scheduler Cleaner"
+msgstr ""
+
+#: ws-action-scheduler-cleaner.php:4
+msgid "Suffering from database bloat? Try cleaning up the Action Scheduler tables through an easy-to-understand GUI."
+msgstr ""
+
+#: ws-action-scheduler-cleaner.php:69
+msgid "Please wait..."
+msgstr ""
+
+#: ws-action-scheduler-cleaner.php:70
+msgid "Loading..."
+msgstr ""
+
+#: ws-action-scheduler-cleaner.php:164
+msgid "This tool allows you to clean up the Action Scheduler tables in your WordPress database. Action Scheduler is a library used by many plugins to schedule background tasks."
+msgstr ""
+
+#: ws-action-scheduler-cleaner.php:165
+msgid "The Action Scheduler uses two main tables:"
+msgstr ""
+
+#: ws-action-scheduler-cleaner.php:167
+msgid "Actions Table: Stores scheduled actions and their statuses."
+msgstr ""
+
+#: ws-action-scheduler-cleaner.php:168
+msgid "Logs Table: Stores logs of action executions."
+msgstr ""
+
+#: ws-action-scheduler-cleaner.php:170
+msgid "Clearing these tables is generally safe and can improve database performance. However, please note:"
+msgstr ""
+
+#: ws-action-scheduler-cleaner.php:172
+msgid "Clearing can take a while depending on the size of the tables."
+msgstr ""
+
+#: ws-action-scheduler-cleaner.php:173
+msgid "Cleared data will be permanently deleted."
+msgstr ""
+
+#: ws-action-scheduler-cleaner.php:174
+msgid "It's recommended to <strong>make a backup</strong> before proceeding."
+msgstr ""
+
+#: ws-action-scheduler-cleaner.php:175
+msgid "Clearing completed, failed, or canceled actions usually doesn't affect WordPress functionality."
+msgstr ""
+
+#: ws-action-scheduler-cleaner.php:177
+msgid "For more information, visit the <a href=\"%s\">Action Scheduler admin page</a>."
+msgstr ""
+
+#: ws-action-scheduler-cleaner.php:143
+msgid "Current Table Sizes:"
+msgstr ""
+
+#: ws-action-scheduler-cleaner.php:151
+msgid "Clear Action Statuses"
+msgstr ""
+
+#: ws-action-scheduler-cleaner.php:153
+msgid "Select which action statuses to clear:"
+msgstr ""
+
+#: ws-action-scheduler-cleaner.php:158
+msgid "Complete"
+msgstr ""
+
+#: ws-action-scheduler-cleaner.php:159
+msgid "Failed"
+msgstr ""
+
+#: ws-action-scheduler-cleaner.php:160
+msgid "Canceled"
+msgstr ""
+
+#: ws-action-scheduler-cleaner.php:163
+msgid "Clear Selected Actions"
+msgstr ""
+
+#: ws-action-scheduler-cleaner.php:169
+msgid "Clear Logs Table"
+msgstr ""
+
+#: ws-action-scheduler-cleaner.php:170
+msgid "This will clear all entries in the logs table."
+msgstr ""
+
+#: ws-action-scheduler-cleaner.php:171
+msgid "Clear Logs"
+msgstr ""
+
+#: ws-action-scheduler-cleaner.php:177
+msgid "Scheduling Options"
+msgstr ""
+
+#: ws-action-scheduler-cleaner.php:178
+msgid "Set up automatic clearing schedules for selected statuses (set to 0 to clean fully; leave empty to disable automatic clearing):"
+msgstr ""
+
+#: ws-action-scheduler-cleaner.php:181
+msgid "Clear logs older than:"
+msgstr ""
+
+#: ws-action-scheduler-cleaner.php:185
+#: ws-action-scheduler-cleaner.php:193
+msgid "days"
+msgstr ""
+
+#: ws-action-scheduler-cleaner.php:189
+msgid "Clear action statuses older than:"
+msgstr ""
+
+#: ws-action-scheduler-cleaner.php:197
+msgid "Save Schedule"
+msgstr ""
+
+#: ws-action-scheduler-cleaner.php:203
+msgid "Powered by Winning Solutions"
+msgstr ""
+
+#: ws-action-scheduler-cleaner.php:252
+msgid "Selected actions cleared successfully!"
+msgstr ""
+
+#: ws-action-scheduler-cleaner.php:270
+msgid "Logs cleared successfully!"
+msgstr ""
+
+#: ws-action-scheduler-cleaner.php:288
+msgid "Schedule saved successfully!"
+msgstr ""
+
+#: ws-action-scheduler-cleaner.php:302
+msgid "Statuses saved successfully!"
+msgstr ""
+
+#: ws-action-scheduler-cleaner.php:420
+msgid "Action Scheduler tables do not exist. Please ensure Action Scheduler is properly installed and activated."
+msgstr ""
+
+#: ws-action-scheduler-cleaner.php:445
+msgid "Please select at least one status to clear."
+msgstr ""
+
+#: ws-action-scheduler-cleaner.php:446
+msgid "Clearing in progress..."
+msgstr ""
+
+#: ws-action-scheduler-cleaner.php:480
+msgid "Optimize Tables"
+msgstr ""
+
+#: ws-action-scheduler-cleaner.php:481
+msgid "Optimize the database tables to reclaim unused space and potentially improve performance."
+msgstr ""
+
+#: ws-action-scheduler-cleaner.php:482
+msgid "Optimize Actions Table"
+msgstr ""
+
+#: ws-action-scheduler-cleaner.php:483
+msgid "Optimize Logs Table"
+msgstr ""
+
+#: ws-action-scheduler-cleaner.php:484
+msgid "Optimizing table..."
+msgstr ""
+
+#: ws-action-scheduler-cleaner.php:485
+msgid "%s table optimized successfully!"
+msgstr ""
+
+#: ws-action-scheduler-cleaner.php:486
+msgid "Table optimization failed."
+msgstr ""
+
+#: ws-action-scheduler-cleaner.php:487
+msgid "An error occurred. Please try again."
+msgstr ""
+
+#: ws-action-scheduler-cleaner.php:488
+msgid "Table does not exist."
+msgstr ""
+
+#: ws-action-scheduler-cleaner.php:489
+msgid "Invalid table type."
+msgstr ""
+
+#: ws-action-scheduler-cleaner.php:490
+msgid "Insufficient permissions."
+msgstr ""
+
+#: includes/class-admin.php:216
+msgid "Setting the \"Cleanup Schedule\" will activate the plugin's own cleaning system, a high-throughput system with moderate server resource usage best suited for less busy times of the day. The \"Retention Period\" for actions cleanup affects both the plugin's and Action Scheduler's cleanup systems. Action Scheduler's own retention period only concerns the actions table and runs continuously in the background with low server resource usage. The \"Retention Period\" for logs cleanup only affects the plugin's cleanup system, as Action Scheduler does not have its own mechanism for cleaning logs."
+msgstr ""
+
+#: includes/class-admin.php:219
+msgid "Action Statuses"
+msgstr ""
+
+#: includes/class-admin.php:221
+msgid "Cleanup Schedule:"
+msgstr ""
+
+#: includes/class-admin.php:226
+msgid "How often to run cleanup (empty or 0 = disabled, 1-365 days)."
+msgstr ""
+
+#: includes/class-admin.php:229
+msgid "Schedule Time:"
+msgstr ""
+
+#: includes/class-admin.php:233
+msgid "Time of day to run cleanup (uses WordPress timezone)."
+msgstr ""
+
+#: includes/class-admin.php:236
+msgid "Retention Period:"
+msgstr ""
+
+#: includes/class-admin.php:241
+msgid "Delete action statuses older than this (0 = delete all matching statuses, required field)."
+msgstr ""
+
+#: includes/class-admin.php:245
+msgid "Logs"
+msgstr ""
+
+#: includes/class-admin.php:267
+msgid "Delete logs older than this (0 = delete all logs, required field)."
+msgstr ""
+
+#: includes/class-ajax.php:139
+msgid "Actions schedule interval must be empty or between 1 and 365 days."
+msgstr ""
+
+#: includes/class-ajax.php:144
+msgid "Logs schedule interval must be empty or between 1 and 365 days."
+msgstr ""
+
+#: includes/class-ajax.php:149
+msgid "Actions schedule time must be in HH:MM format."
+msgstr ""
+
+#: includes/class-ajax.php:154
+msgid "Logs schedule time must be in HH:MM format."
+msgstr ""
+
+#: includes/class-ajax.php:159
+msgid "Actions retention period is required and must be between 0 and 365 days."
+msgstr ""
+
+#: includes/class-ajax.php:164
+msgid "Logs retention period is required and must be between 0 and 365 days."
+msgstr ""
