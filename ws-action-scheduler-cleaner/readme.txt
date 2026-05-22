@@ -1,9 +1,9 @@
 === WS Action Scheduler Cleaner ===
 Contributors: winningsolutions
 Donate link: https://www.winning-solutions.de
-Requires at least: 6.2
-Tested up to: 6.9
-Stable tag: 1.2.5
+Requires at least: 6.3
+Tested up to: 7.0
+Stable tag: 1.2.6
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -48,6 +48,10 @@ Yes, Action Scheduler Cleaner is fully compatible with WooCommerce and other plu
 
 No, this plugin only clears completed, failed, or canceled actions. It does not interfere with pending or in-progress actions.
 
+= What PHP and WordPress versions are required? =
+
+Requires WordPress 6.3 or newer and PHP 7.4 or newer (compatible with PHP 8.5).
+
 == Usage ==
 
 1. In the WordPress admin panel, go to Tools > Action Scheduler Cleaner
@@ -63,6 +67,14 @@ For best results, we recommend setting up an automatic clearing schedule to main
 1. The plugin's user interface.
 
 == Changelog ==
+
+= 2026-05-22: 1.2.6 =
+* **WordPress 7.0 compatibility**: Tested with WordPress 7.0; minimum WordPress version is now 6.3.
+* **PHP compatibility**: Supports PHP 7.4 through 8.5.
+* **WordPress 6.3 APIs**: Diagnostic logging via `wp_is_development_mode( 'plugin' )`, `cron_memory_limit` for scheduled cleanups, and simplified object cache flushing.
+* **Admin UI**: Styles use WordPress admin theme CSS variables for better compatibility with the Modern admin color scheme.
+* **Scheduling**: Cron health checks run on the plugin admin screen only; reduced redundant schedule registration hooks.
+* **Security**: Hardened AJAX status save and cleanup progress validation before batch deletes.
 
 = 2025-12-11: 1.2.5 =
 * **Increased batch size**: AJAX-caused cleanups are a bit too slow to deal with GB-sized tables, so now they're faster while still not stressing the DB too much.
@@ -98,6 +110,9 @@ For best results, we recommend setting up an automatic clearing schedule to main
 * Initial release.
 
 == Upgrade Notice ==
+
+= 1.2.6 =
+* WordPress 7.0 compatibility update. Requires WordPress 6.3+ and PHP 7.4+. Recommended for all users before upgrading WordPress to 7.0.
 
 = 1.2.0 =
 * This update reworks the automatic cleanup functionality so both Action Scheduler's built-in cleaning and the plugin's can be configured. Your existing settings will be preserved. Recommended for all users.
