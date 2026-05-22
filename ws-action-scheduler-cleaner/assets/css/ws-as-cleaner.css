@@ -1,3 +1,9 @@
+/* Utility
+---------------------------------------- */
+.wsacsc-is-hidden {
+    display: none !important;
+}
+
 /* Theme tokens (WordPress admin CSS variables with fallbacks)
 ---------------------------------------- */
 .wsacsc-cleaner {
@@ -115,6 +121,13 @@
     border-color: var(--wsacsc-primary-dark);
     transform: translateY(-1px);
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+	color: var(--wsacsc-surface);
+}
+
+.wsacsc-cleaner .button-primary:focus-visible,
+.wsacsc-cleaner .button-secondary:focus-visible {
+    outline: 2px solid var(--wsacsc-primary);
+    outline-offset: 2px;
 }
 
 .wsacsc-cleaner .button-primary:active,
@@ -207,8 +220,13 @@
 
 .wsacsc-section input[type="number"]:focus {
     border-color: var(--wsacsc-primary);
-    outline: none;
     box-shadow: 0 0 0 1px var(--wsacsc-primary);
+}
+
+.wsacsc-section input[type="number"]:focus-visible,
+.wsacsc-section input[type="time"]:focus-visible {
+    outline: 2px solid var(--wsacsc-primary);
+    outline-offset: 0;
 }
 
 .wsacsc-section input[type="number"].wsacsc-field-error,
@@ -225,6 +243,16 @@
 }
 
 /* Checkbox styles */
+.wsacsc-options {
+    border: 0;
+    margin: 0 0 15px 0;
+    padding: 0;
+}
+
+.wsacsc-options legend.screen-reader-text {
+    margin: 0;
+}
+
 .wsacsc-options label {
     display: inline-block;
     margin-right: 15px;
@@ -263,22 +291,31 @@
     transform: scale(1.1);
 }
 
-/* Refresh icon styles
+/* Refresh control styles
 ---------------------------------------- */
-.wsacsc-refresh {
-    cursor: pointer;
+.wsacsc-refresh.button-link {
     vertical-align: middle;
     margin-left: 5px;
-    transition: transform 0.3s ease;
+    padding: 0;
+    min-height: auto;
+    line-height: 1;
     color: var(--wsacsc-primary);
+    transition: color 0.3s ease, transform 0.3s ease;
+	text-decoration: none;
 }
 
-.wsacsc-refresh:hover {
-    transform: rotate(180deg);
+.wsacsc-refresh.button-link:hover {
     color: var(--wsacsc-primary-dark);
+    transform: rotate(180deg);
 }
 
-.wsacsc-refresh.spin {
+.wsacsc-refresh.button-link:focus-visible {
+    outline: 2px solid var(--wsacsc-primary);
+    outline-offset: 2px;
+    box-shadow: none;
+}
+
+.wsacsc-refresh.spin .dashicons {
     animation: spin 1s linear infinite;
 }
 
@@ -367,8 +404,34 @@
 
 .wsacsc-section input[type="time"]:focus {
     border-color: var(--wsacsc-primary);
-    outline: none;
     box-shadow: 0 0 0 1px var(--wsacsc-primary);
+}
+
+/* Reduced motion
+---------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+    .wsacsc-cleaner .button-primary,
+    .wsacsc-cleaner .button-secondary,
+    .wsacsc-refresh.button-link,
+    .wsacsc-powered-by a,
+    .wsacsc-powered-by img,
+    .wsacsc-message {
+        transition: none;
+    }
+
+    .wsacsc-cleaner .button-primary:hover,
+    .wsacsc-cleaner .button-secondary:hover {
+        transform: none;
+    }
+
+    .wsacsc-refresh.button-link:hover {
+        transform: none;
+    }
+
+    .wsacsc-refresh.spin .dashicons,
+    .wsacsc-message.info::before {
+        animation: none;
+    }
 }
 
 /* Responsive design

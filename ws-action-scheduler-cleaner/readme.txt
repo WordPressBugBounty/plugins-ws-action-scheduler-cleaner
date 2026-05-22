@@ -3,7 +3,7 @@ Contributors: winningsolutions
 Donate link: https://www.winning-solutions.de
 Requires at least: 6.3
 Tested up to: 7.0
-Stable tag: 1.2.6
+Stable tag: 1.2.9.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -52,6 +52,14 @@ No, this plugin only clears completed, failed, or canceled actions. It does not 
 
 Requires WordPress 6.3 or newer and PHP 7.4 or newer (compatible with PHP 8.5).
 
+= Why do I only see Pending (and All) on the Action Scheduler admin screen? =
+
+Action Scheduler only shows status tabs when at least one action has that status in the database. This plugin does not remove or hide those tabs. If Complete or Failed never appear, there may be no rows with those statuses—common when millions of actions are stuck in pending and the queue cannot catch up. Cleanup Schedule (how often the plugin runs) is not the same as Retention Period (how old finished actions must be before deletion). Retention uses completion or last attempt time, matching Action Scheduler's built-in cleaner.
+
+= What is the difference between Cleanup Schedule and Retention Period? =
+
+Cleanup Schedule sets how often this plugin's scheduled cleanup runs (1–365 days, or disabled). Retention Period sets the age threshold for deleting finished actions you selected. When a cleanup schedule is enabled, Action Scheduler's own continuous cleanup is turned off to prevent double deletion.
+
 == Usage ==
 
 1. In the WordPress admin panel, go to Tools > Action Scheduler Cleaner
@@ -68,13 +76,19 @@ For best results, we recommend setting up an automatic clearing schedule to main
 
 == Changelog ==
 
-= 2026-05-22: 1.2.6 =
+= 2026-05-22: 1.2.9.1 =
+**Fix**: Minor CSS fix with Modern styles.
+
+= 2026-05-22: 1.2.9 =
 * **WordPress 7.0 compatibility**: Tested with WordPress 7.0; minimum WordPress version is now 6.3.
 * **PHP compatibility**: Supports PHP 7.4 through 8.5.
 * **WordPress 6.3 APIs**: Diagnostic logging via `wp_is_development_mode( 'plugin' )`, `cron_memory_limit` for scheduled cleanups, and simplified object cache flushing.
 * **Admin UI**: Styles use WordPress admin theme CSS variables for better compatibility with the Modern admin color scheme.
 * **Scheduling**: Cron health checks run on the plugin admin screen only; reduced redundant schedule registration hooks.
 * **Security**: Hardened AJAX status save and cleanup progress validation before batch deletes.
+* **Retention fix**: Scheduled action cleanup now uses completion or last attempt time (aligned with Action Scheduler), not the original scheduled date—important for high-backlog sites where old scheduled dates caused immediate deletion of newly finished actions.
+* **Admin copy**: Clarified cleanup schedule vs retention period and why Action Scheduler status tabs may show only Pending.
+* **FAQ**: Added troubleshooting for missing Complete/Failed status filters.
 
 = 2025-12-11: 1.2.5 =
 * **Increased batch size**: AJAX-caused cleanups are a bit too slow to deal with GB-sized tables, so now they're faster while still not stressing the DB too much.
@@ -110,6 +124,9 @@ For best results, we recommend setting up an automatic clearing schedule to main
 * Initial release.
 
 == Upgrade Notice ==
+
+= 1.2.7 =
+* Fixes retention cleanup to use completion/last-attempt time on busy Action Scheduler queues. Recommended for sites that only see Pending on the Scheduled Actions screen.
 
 = 1.2.6 =
 * WordPress 7.0 compatibility update. Requires WordPress 6.3+ and PHP 7.4+. Recommended for all users before upgrading WordPress to 7.0.

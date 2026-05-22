@@ -140,7 +140,7 @@ class WSACSC_Cleanup {
 				return false;
 			}
 
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
 			$result = $wpdb->query( "OPTIMIZE TABLE `{$logs_table}`" );
 
 			if ( $result === false ) {
@@ -179,7 +179,7 @@ class WSACSC_Cleanup {
 				return false;
 			}
 
-            // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared
 			$result = $wpdb->query( "OPTIMIZE TABLE `{$actions_table}`" );
 
 			if ( $result === false ) {
@@ -403,18 +403,18 @@ class WSACSC_Cleanup {
 					return;
 				}
 
-				$actions_table = $wpdb->prefix . 'actionscheduler_actions';
-				$placeholders  = implode( ',', array_fill( 0, count( $selected_statuses ), '%s' ) );
+				$actions_table   = $wpdb->prefix . 'actionscheduler_actions';
+				$retention_where = wsacsc_build_actions_retention_where( $selected_statuses, $retention_days );
 
-				if ( $retention_days === 0 ) {
-					$where_clause = 'status IN (' . $placeholders . ')';
-					$where_params = $selected_statuses;
-				} else {
-					$where_clause = 'status IN (' . $placeholders . ') AND scheduled_date_gmt < DATE_SUB(NOW(), INTERVAL %d DAY)';
-					$where_params = array_merge( $selected_statuses, array( $retention_days ) );
+				if ( empty( $retention_where['where_clause'] ) ) {
+					return;
 				}
 
-				$total_deleted = self::batch_delete_until_complete( $actions_table, $where_clause, $where_params );
+				$total_deleted = self::batch_delete_until_complete(
+					$actions_table,
+					$retention_where['where_clause'],
+					$retention_where['where_params']
+				);
 
 				if ( $total_deleted > 0 ) {
 					wp_cache_delete( 'wsacsc_table_sizes', self::CACHE_GROUP );

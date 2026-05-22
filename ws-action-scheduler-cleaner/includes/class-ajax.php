@@ -36,7 +36,6 @@ class WSACSC_Ajax {
 
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'ws-action-scheduler-cleaner' ) ) );
-			return;
 		}
 
 		check_ajax_referer( 'wsacsc_nonce', 'nonce' );
@@ -52,7 +51,6 @@ class WSACSC_Ajax {
 
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'ws-action-scheduler-cleaner' ) ) );
-			return;
 		}
 
 		check_ajax_referer( 'wsacsc_nonce', 'nonce' );
@@ -66,12 +64,10 @@ class WSACSC_Ajax {
 
 		if ( empty( $statuses ) ) {
 			wp_send_json_error( array( 'message' => __( 'Please select at least one status to clear.', 'ws-action-scheduler-cleaner' ) ) );
-			return;
 		}
 
 		if ( ! WSACSC_Database::check_tables_exist() ) {
 			wp_send_json_error( array( 'message' => __( 'Action Scheduler tables do not exist.', 'ws-action-scheduler-cleaner' ) ) );
-			return;
 		}
 
 		$actions_table = $wpdb->prefix . 'actionscheduler_actions';
@@ -113,15 +109,14 @@ class WSACSC_Ajax {
 	public static function clear_logs(): void {
 		nocache_headers();
 
-		check_ajax_referer( 'wsacsc_nonce', 'nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'ws-action-scheduler-cleaner' ) ) );
-			return;
 		}
+
+		check_ajax_referer( 'wsacsc_nonce', 'nonce' );
 
 		if ( ! WSACSC_Database::check_tables_exist() ) {
 			wp_send_json_error( array( 'message' => __( 'Action Scheduler tables do not exist.', 'ws-action-scheduler-cleaner' ) ) );
-			return;
 		}
 
 		global $wpdb;
@@ -163,11 +158,11 @@ class WSACSC_Ajax {
 	public static function save_schedule(): void {
 		nocache_headers();
 
-		check_ajax_referer( 'wsacsc_nonce', 'nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'ws-action-scheduler-cleaner' ) ) );
-			return;
 		}
+
+		check_ajax_referer( 'wsacsc_nonce', 'nonce' );
 
 		$actions_schedule_interval = isset( $_POST['actions_schedule_interval'] ) ? sanitize_text_field( wp_unslash( $_POST['actions_schedule_interval'] ) ) : '';
 		$actions_schedule_time     = isset( $_POST['actions_schedule_time'] ) ? sanitize_text_field( wp_unslash( $_POST['actions_schedule_time'] ) ) : '';
@@ -186,32 +181,26 @@ class WSACSC_Ajax {
 
 		if ( $actions_schedule_interval !== '' && ( ! ctype_digit( (string) $actions_schedule_interval ) || (int) $actions_schedule_interval < 1 || (int) $actions_schedule_interval > 365 ) ) {
 			wp_send_json_error( array( 'message' => __( 'Actions schedule interval must be empty or between 1 and 365 days.', 'ws-action-scheduler-cleaner' ) ) );
-			return;
 		}
 
 		if ( $logs_schedule_interval !== '' && ( ! ctype_digit( (string) $logs_schedule_interval ) || (int) $logs_schedule_interval < 1 || (int) $logs_schedule_interval > 365 ) ) {
 			wp_send_json_error( array( 'message' => __( 'Logs schedule interval must be empty or between 1 and 365 days.', 'ws-action-scheduler-cleaner' ) ) );
-			return;
 		}
 
 		if ( $actions_schedule_time !== '' && ! preg_match( '/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/', $actions_schedule_time ) ) {
 			wp_send_json_error( array( 'message' => __( 'Actions schedule time must be in HH:MM format.', 'ws-action-scheduler-cleaner' ) ) );
-			return;
 		}
 
 		if ( $logs_schedule_time !== '' && ! preg_match( '/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/', $logs_schedule_time ) ) {
 			wp_send_json_error( array( 'message' => __( 'Logs schedule time must be in HH:MM format.', 'ws-action-scheduler-cleaner' ) ) );
-			return;
 		}
 
 		if ( $actions_retention === '' || ! ctype_digit( (string) $actions_retention ) || (int) $actions_retention < 0 || (int) $actions_retention > 365 ) {
 			wp_send_json_error( array( 'message' => __( 'Actions retention period is required and must be between 0 and 365 days.', 'ws-action-scheduler-cleaner' ) ) );
-			return;
 		}
 
 		if ( $logs_retention === '' || ! ctype_digit( (string) $logs_retention ) || (int) $logs_retention < 0 || (int) $logs_retention > 365 ) {
 			wp_send_json_error( array( 'message' => __( 'Logs retention period is required and must be between 0 and 365 days.', 'ws-action-scheduler-cleaner' ) ) );
-			return;
 		}
 
 		$options_to_save = array(
@@ -295,7 +284,6 @@ class WSACSC_Ajax {
 			}
 			delete_transient( 'wsacsc_save_backup' );
 			wp_send_json_error( array( 'message' => __( 'Failed to save schedule. Please try again.', 'ws-action-scheduler-cleaner' ) ) );
-			return;
 		}
 
 		delete_transient( 'wsacsc_save_backup' );
@@ -313,18 +301,18 @@ class WSACSC_Ajax {
 	public static function save_selected_statuses(): void {
 		nocache_headers();
 
-		check_ajax_referer( 'wsacsc_nonce', 'nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'ws-action-scheduler-cleaner' ) ) );
-			return;
 		}
+
+		check_ajax_referer( 'wsacsc_nonce', 'nonce' );
+
 		$statuses_input = isset( $_POST['statuses'] ) && is_array( $_POST['statuses'] ) ? $_POST['statuses'] : array();
 		$statuses       = array_map( 'sanitize_text_field', wp_unslash( $statuses_input ) );
 		$statuses       = array_intersect( $statuses, wsacsc_get_allowed_action_statuses() );
 
 		if ( empty( $statuses ) ) {
 			wp_send_json_error( array( 'message' => __( 'Please select at least one status to clear.', 'ws-action-scheduler-cleaner' ) ) );
-			return;
 		}
 
 		update_option( 'wsacsc_selected_statuses', $statuses );
@@ -343,15 +331,13 @@ class WSACSC_Ajax {
 
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'ws-action-scheduler-cleaner' ) ) );
-			return;
 		}
 
 		check_ajax_referer( 'wsacsc_nonce', 'nonce' );
 
 		$table_type = isset( $_POST['table_type'] ) ? sanitize_text_field( wp_unslash( $_POST['table_type'] ) ) : '';
-		if ( ! in_array( $table_type, array( 'actions', 'logs' ) ) ) {
+		if ( ! in_array( $table_type, array( 'actions', 'logs' ), true ) ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid table type.', 'ws-action-scheduler-cleaner' ) ) );
-			return;
 		}
 
 		global $wpdb;
@@ -385,27 +371,24 @@ class WSACSC_Ajax {
 
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'ws-action-scheduler-cleaner' ) ) );
-			return;
 		}
 
 		check_ajax_referer( 'wsacsc_nonce', 'nonce' );
 
 		$table_type = isset( $_POST['table_type'] ) ? sanitize_text_field( wp_unslash( $_POST['table_type'] ) ) : '';
-		if ( ! in_array( $table_type, array( 'actions', 'logs' ) ) ) {
+		if ( ! in_array( $table_type, array( 'actions', 'logs' ), true ) ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid table type.', 'ws-action-scheduler-cleaner' ) ) );
-			return;
 		}
 
 		$result = false;
-		if ( $table_type === 'logs' ) {
+		if ( 'logs' === $table_type ) {
 			$result = WSACSC_Cleanup::optimize_logs_table();
-		} elseif ( $table_type === 'actions' ) {
+		} elseif ( 'actions' === $table_type ) {
 			$result = WSACSC_Cleanup::optimize_actions_table();
 		}
 
-		if ( $result === false ) {
+		if ( false === $result ) {
 			wp_send_json_error( array( 'message' => __( 'Table optimization failed.', 'ws-action-scheduler-cleaner' ) ) );
-			return;
 		}
 
 		wp_cache_delete( 'wsacsc_table_sizes', WSACSC_Database::CACHE_GROUP );
@@ -414,6 +397,7 @@ class WSACSC_Ajax {
 			array_merge(
 				WSACSC_Database::get_table_size_data(),
 				array(
+					/* translators: %s: table type (actions or logs). */
 					'message'    => sprintf( __( '%s table optimized successfully!', 'ws-action-scheduler-cleaner' ), ucfirst( $table_type ) ),
 					'table_type' => $table_type,
 				)
@@ -429,7 +413,6 @@ class WSACSC_Ajax {
 
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( array( 'message' => __( 'Insufficient permissions.', 'ws-action-scheduler-cleaner' ) ) );
-			return;
 		}
 
 		check_ajax_referer( 'wsacsc_nonce', 'nonce' );
@@ -437,27 +420,24 @@ class WSACSC_Ajax {
 		$cleanup_id = isset( $_POST['cleanup_id'] ) ? sanitize_text_field( wp_unslash( $_POST['cleanup_id'] ) ) : '';
 		if ( empty( $cleanup_id ) ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid cleanup ID.', 'ws-action-scheduler-cleaner' ) ) );
-			return;
 		}
 
 		$transient_key = 'wsacsc_cleanup_' . $cleanup_id;
 		$progress      = get_transient( $transient_key );
 
-		if ( $progress === false ) {
+		if ( false === $progress ) {
 			wp_send_json_success(
 				array(
 					'completed' => true,
 					'message'   => __( 'Cleanup completed.', 'ws-action-scheduler-cleaner' ),
 				)
 			);
-			return;
 		}
 
 		$progress = wsacsc_validate_cleanup_progress( $progress );
 		if ( false === $progress ) {
 			delete_transient( $transient_key );
 			wp_send_json_error( array( 'message' => __( 'Invalid cleanup progress data.', 'ws-action-scheduler-cleaner' ) ) );
-			return;
 		}
 
 		$result = WSACSC_Cleanup::process_ajax_batch(

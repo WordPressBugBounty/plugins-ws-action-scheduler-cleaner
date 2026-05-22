@@ -169,8 +169,14 @@ msgstr "Ungültiger Tabellentyp."
 msgid "Insufficient permissions."
 msgstr "Unzureichende Berechtigungen."
 
-msgid "Setting the \"Cleanup Schedule\" will activate the plugin's own cleaning system, a high-throughput system with moderate server resource usage best suited for less busy times of the day. The \"Retention Period\" for actions cleanup affects both the plugin's and Action Scheduler's cleanup systems. Action Scheduler's own retention period only concerns the actions table and runs continuously in the background with low server resource usage. The \"Retention Period\" for logs cleanup only affects the plugin's cleanup system, as Action Scheduler does not have its own mechanism for cleaning logs."
-msgstr "Das Setzen des \"Bereinigungszeitplans\" aktiviert das eigene Bereinigungssystem des Plugins, ein System mit hohem Durchsatz und moderatem Serverressourcenverbrauch, das am besten für weniger ausgelastete Tageszeiten geeignet ist. Die \"Aufbewahrungsfrist\" für die Bereinigung von Aktionen wirkt sich sowohl auf das Plugin- als auch auf das Action Scheduler-Bereinigungssystem aus. Die eigene Aufbewahrungsfrist von Action Scheduler betrifft nur die Aktionstabelle und läuft kontinuierlich im Hintergrund mit geringem Serverressourcenverbrauch. Die \"Aufbewahrungsfrist\" für die Bereinigung von Protokollen wirkt sich nur auf das Bereinigungssystem des Plugins aus, da Action Scheduler keinen eigenen Mechanismus zur Bereinigung von Protokollen hat."
+msgid "Cleanup Schedule and Retention Period are separate settings. Cleanup Schedule controls how often this plugin runs its own cleanup job (when set to 1–365 days). Retention Period controls how old finished actions must be before they are deleted, based on completion or last attempt time—the same basis Action Scheduler uses—not the original scheduled date."
+msgstr "Bereinigungszeitplan und Aufbewahrungsfrist sind getrennte Einstellungen. Der Bereinigungszeitplan legt fest, wie oft dieses Plugin seinen eigenen Bereinigungsjob ausführt (bei 1–365 Tagen). Die Aufbewahrungsfrist legt fest, wie alt abgeschlossene Aktionen sein müssen, bevor sie gelöscht werden – anhand von Abschluss- oder letztem Ausführungszeitpunkt, wie bei Action Scheduler, nicht am ursprünglichen Planungsdatum."
+
+msgid "When a cleanup schedule is enabled, Action Scheduler's built-in continuous cleanup is disabled to avoid duplicate deletions; only this plugin's scheduled job removes old finished actions until you clear the schedule. Without a cleanup schedule, Retention Period still applies to Action Scheduler's background cleanup. Logs retention applies only to this plugin's log cleanup."
+msgstr "Wenn ein Bereinigungszeitplan aktiviert ist, wird die kontinuierliche Bereinigung von Action Scheduler deaktiviert, um doppelte Löschungen zu vermeiden; nur der geplante Job dieses Plugins entfernt alte abgeschlossene Aktionen, bis du den Zeitplan deaktivierst. Ohne Bereinigungszeitplan gilt die Aufbewahrungsfrist weiterhin für die Hintergrundbereinigung von Action Scheduler. Die Aufbewahrungsfrist für Protokolle betrifft nur die Protokollbereinigung dieses Plugins."
+
+msgid "This plugin does not hide status filters on the Action Scheduler admin screen. Tabs such as Complete or Failed only appear when actions with those statuses exist in the database. On sites with a very large pending backlog, few actions may finish; if counts stay at zero, those tabs will not show."
+msgstr "Dieses Plugin blendet keine Statusfilter auf der Action-Scheduler-Verwaltungsseite aus. Registerkarten wie „Abgeschlossen“ oder „Fehlgeschlagen“ erscheinen nur, wenn Aktionen mit diesen Status in der Datenbank existieren. Bei sehr großem Pending-Rückstau werden wenige Aktionen abgeschlossen; bleiben die Zähler bei null, werden diese Registerkarten nicht angezeigt."
 
 msgid "Action Statuses"
 msgstr "Aktionsstatus"
@@ -178,8 +184,8 @@ msgstr "Aktionsstatus"
 msgid "Cleanup Schedule:"
 msgstr "Bereinigungszeitplan:"
 
-msgid "How often to run cleanup (empty or 0 = disabled, 1-365 days)."
-msgstr "Wie oft die Bereinigung ausgeführt werden soll (leer oder 0 = deaktiviert, 1-365 Tage)."
+msgid "How often this plugin runs its cleanup job (empty or 0 = disabled, 1–365 days). This is not the retention period."
+msgstr "Wie oft dieses Plugin seinen Bereinigungsjob ausführt (leer oder 0 = deaktiviert, 1–365 Tage). Das ist nicht die Aufbewahrungsfrist."
 
 msgid "Schedule Time:"
 msgstr "Zeitplan:"
@@ -190,8 +196,8 @@ msgstr "Tageszeit für die Bereinigung (verwendet WordPress-Zeitzone)."
 msgid "Retention Period:"
 msgstr "Aufbewahrungsfrist:"
 
-msgid "Delete action statuses older than this (0 = delete all matching statuses, required field)."
-msgstr "Aktionsstatus löschen, die älter sind als dies (0 = alle passenden Status löschen, Pflichtfeld)."
+msgid "Delete selected finished statuses whose completion or last attempt is older than this many days (0 = delete all matching statuses on each cleanup run, required field)."
+msgstr "Ausgewählte abgeschlossene Status löschen, deren Abschluss oder letzte Ausführung älter ist als diese Anzahl Tage (0 = bei jedem Bereinigungslauf alle passenden Status löschen, Pflichtfeld)."
 
 msgid "Logs"
 msgstr "Protokolle"

@@ -1,6 +1,15 @@
 jQuery(document).ready(function($) {
     'use strict';
 
+    const $wrap = $('.wrap.wsacsc-cleaner');
+    const scheduleFieldSelector = '#actions-schedule-interval, #actions-schedule-time, #actions-retention, #logs-schedule-interval, #logs-schedule-time, #logs-retention';
+
+    function setAriaBusy(busy) {
+        if ($wrap.length) {
+            $wrap.attr('aria-busy', busy ? 'true' : 'false');
+        }
+    }
+
     // Disable all buttons until table size and row calculations are complete
     let initialLoadComplete = false;
     $('button.button-primary, button.button-secondary, #clear-actions').prop('disabled', true);
@@ -30,6 +39,7 @@ jQuery(document).ready(function($) {
     if (isLoading) return;
     
     isLoading = true;
+    setAriaBusy(true);
     const $refresh = $(`.wsacsc-refresh-${tableType}`);
     $refresh.addClass('spin');
     
@@ -67,21 +77,11 @@ jQuery(document).ready(function($) {
         },
         complete: function() {
             isLoading = false;
+            setAriaBusy(false);
             $refresh.removeClass('spin');
         }
     });
 }
-
-    // Click handler for refresh icons
-    $('.wsacsc-refresh-actions').on('click', function(e) {
-    e.preventDefault();
-    updateSingleTableSize('actions');
-    });
-
-    $('.wsacsc-refresh-logs').on('click', function(e) {
-    e.preventDefault();
-    updateSingleTableSize('logs');
-    });
 
     // Initial load - moved after function definition
     updateTableSizes(true);
@@ -119,6 +119,7 @@ jQuery(document).ready(function($) {
     if (isLoading) return;
     
     isLoading = true;
+    setAriaBusy(true);
     $('.wsacsc-refresh').addClass('spin');
     $('#actions-count, #logs-count, #actions-size, #logs-size').text(wsacsc_cleaner.updating_text);
 
@@ -154,13 +155,13 @@ jQuery(document).ready(function($) {
         },
         complete: function() {
             isLoading = false;
+            setAriaBusy(false);
             $('.wsacsc-refresh').removeClass('spin');
         }
     });
     }
 
-    // Replace the refresh click handler
-    $('.wsacsc-refresh').click(function(e) {
+    $('.wsacsc-refresh').on('click', function(e) {
         e.preventDefault();
         const tableType = $(this).hasClass('wsacsc-refresh-actions') ? 'actions' : 'logs';
         updateSingleTableSize(tableType);
@@ -192,37 +193,32 @@ jQuery(document).ready(function($) {
     // Helper function to show messages with proper transitions
     function showMessage(selector, message, type, persistent) {
         const $message = $(selector);
-        
+
         if ($message.length === 0) {
             console.error('Message container not found:', selector);
             return;
         }
 
-        // Remove existing classes and add new type
         $message
-            .removeClass('success error info fade-out')
+            .removeClass('success error info fade-out wsacsc-is-hidden')
             .addClass(type)
+            .attr('aria-live', type === 'error' ? 'assertive' : 'polite')
             .text(message)
-            .show();
-        
-        // Force a reflow to ensure transition works
+            .css('opacity', '1');
+
         if ($message[0]) {
             void $message[0].offsetHeight;
         }
-        
-        // Fade in
-        $message.css('opacity', '1');
-        
-        // Only auto-hide if not persistent
+
         if (!persistent) {
-            // Set timeout for fade out
-            setTimeout(() => {
+            setTimeout(function() {
                 $message.addClass('fade-out');
-                
-                // Remove message after fade out
-                setTimeout(() => {
-                    $message.hide().removeClass('fade-out');
-                }, 300); // Match the CSS transition duration
+                setTimeout(function() {
+                    $message
+                        .removeClass('success error info fade-out')
+                        .addClass('wsacsc-is-hidden')
+                        .css('opacity', '');
+                }, 300);
             }, 5000);
         }
     }
@@ -250,6 +246,7 @@ jQuery(document).ready(function($) {
                         if (response.data.completed) {
                             showMessage(messageSelector, response.data.message, 'success');
                             $button.prop('disabled', false);
+                            setAriaBusy(false);
                             if (tableType) {
                                 updateSingleTableSize(tableType);
                             }
@@ -260,11 +257,13 @@ jQuery(document).ready(function($) {
                     } else {
                         showMessage(messageSelector, response.data?.message || wsacsc_cleaner.error_message, 'error');
                         $button.prop('disabled', false);
+                        setAriaBusy(false);
                     }
                 },
                 error: function() {
                     showMessage(messageSelector, wsacsc_cleaner.error_message, 'error');
                     $button.prop('disabled', false);
+                    setAriaBusy(false);
                 }
             });
         }
@@ -279,6 +278,7 @@ jQuery(document).ready(function($) {
             return;
         }
         $(this).prop('disabled', true);
+        setAriaBusy(true);
 
         var selectedStatuses = [];
         $('input[name="status[]"]:checked').each(function() {
@@ -288,6 +288,7 @@ jQuery(document).ready(function($) {
         if (selectedStatuses.length === 0) {
             showMessage('#actions-status-message', wsacsc_cleaner.select_status_message, 'error');
             $(this).prop('disabled', false);
+            setAriaBusy(false);
             return;
         }
 
@@ -308,6 +309,7 @@ jQuery(document).ready(function($) {
                     if (response.data.completed) {
                         showMessage('#actions-status-message', response.data.message, 'success');
                         $button.prop('disabled', false);
+                        setAriaBusy(false);
                         updateSingleTableSize('actions');
                     } else {
                         showMessage('#actions-status-message', response.data.message, 'info', true);
@@ -316,11 +318,13 @@ jQuery(document).ready(function($) {
                 } else {
                     showMessage('#actions-status-message', response.data?.message || wsacsc_cleaner.error_message, 'error');
                     $button.prop('disabled', false);
+                    setAriaBusy(false);
                 }
             },
             error: function() {
                 showMessage('#actions-status-message', wsacsc_cleaner.error_message, 'error');
                 $button.prop('disabled', false);
+                setAriaBusy(false);
             }
         });
     });
@@ -332,6 +336,7 @@ jQuery(document).ready(function($) {
             return;
         }
         $(this).prop('disabled', true);
+        setAriaBusy(true);
 
         showMessage('#logs-status-message', wsacsc_cleaner.clearing_message, 'info', true);
 
@@ -349,6 +354,7 @@ jQuery(document).ready(function($) {
                     if (response.data.completed) {
                         showMessage('#logs-status-message', response.data.message, 'success');
                         $button.prop('disabled', false);
+                        setAriaBusy(false);
                         updateSingleTableSize('logs');
                     } else {
                         showMessage('#logs-status-message', response.data.message, 'info', true);
@@ -357,11 +363,13 @@ jQuery(document).ready(function($) {
                 } else {
                     showMessage('#logs-status-message', response.data?.message || wsacsc_cleaner.error_message, 'error');
                     $button.prop('disabled', false);
+                    setAriaBusy(false);
                 }
             },
             error: function() {
                 showMessage('#logs-status-message', wsacsc_cleaner.error_message, 'error');
                 $button.prop('disabled', false);
+                setAriaBusy(false);
             }
         });
     });
@@ -369,9 +377,8 @@ jQuery(document).ready(function($) {
     // Validation function for schedule fields
     function validateScheduleFields() {
         var isValid = true;
-        
-        // Clear previous error states
-        $('.wsacsc-scheduling-option input').removeClass('wsacsc-field-error');
+
+        $(scheduleFieldSelector).removeClass('wsacsc-field-error').attr('aria-invalid', 'false');
         
         var actionsScheduleInterval = $('#actions-schedule-interval').val();
         var actionsScheduleTime = $('#actions-schedule-time').val();
@@ -392,7 +399,7 @@ jQuery(document).ready(function($) {
         if (actionsScheduleInterval !== '') {
             var actionsIntervalNum = parseInt(actionsScheduleInterval, 10);
             if (isNaN(actionsIntervalNum) || actionsIntervalNum < 1 || actionsIntervalNum > 365) {
-                $('#actions-schedule-interval').addClass('wsacsc-field-error');
+                $('#actions-schedule-interval').addClass('wsacsc-field-error').attr('aria-invalid', 'true');
                 isValid = false;
             }
         }
@@ -401,32 +408,32 @@ jQuery(document).ready(function($) {
         if (logsScheduleInterval !== '') {
             var logsIntervalNum = parseInt(logsScheduleInterval, 10);
             if (isNaN(logsIntervalNum) || logsIntervalNum < 1 || logsIntervalNum > 365) {
-                $('#logs-schedule-interval').addClass('wsacsc-field-error');
+                $('#logs-schedule-interval').addClass('wsacsc-field-error').attr('aria-invalid', 'true');
                 isValid = false;
             }
         }
 
         // Validate schedule times (HH:MM format)
         if (actionsScheduleTime !== '' && !/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(actionsScheduleTime)) {
-            $('#actions-schedule-time').addClass('wsacsc-field-error');
+            $('#actions-schedule-time').addClass('wsacsc-field-error').attr('aria-invalid', 'true');
             isValid = false;
         }
 
         if (logsScheduleTime !== '' && !/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(logsScheduleTime)) {
-            $('#logs-schedule-time').addClass('wsacsc-field-error');
+            $('#logs-schedule-time').addClass('wsacsc-field-error').attr('aria-invalid', 'true');
             isValid = false;
         }
 
         // Validate retention periods (required, 0-365)
         var actionsRetentionNum = parseInt(actionsRetention, 10);
         if (actionsRetention === '' || isNaN(actionsRetentionNum) || actionsRetentionNum < 0 || actionsRetentionNum > 365) {
-            $('#actions-retention').addClass('wsacsc-field-error');
+            $('#actions-retention').addClass('wsacsc-field-error').attr('aria-invalid', 'true');
             isValid = false;
         }
 
         var logsRetentionNum = parseInt(logsRetention, 10);
         if (logsRetention === '' || isNaN(logsRetentionNum) || logsRetentionNum < 0 || logsRetentionNum > 365) {
-            $('#logs-retention').addClass('wsacsc-field-error');
+            $('#logs-retention').addClass('wsacsc-field-error').attr('aria-invalid', 'true');
             isValid = false;
         }
 
@@ -437,7 +444,7 @@ jQuery(document).ready(function($) {
     }
 
     // Add real-time validation on field changes
-    $('#actions-schedule-interval, #actions-schedule-time, #actions-retention, #logs-schedule-interval, #logs-schedule-time, #logs-retention').on('input change blur', function() {
+    $(scheduleFieldSelector).on('input change blur', function() {
         validateScheduleFields();
     });
 
@@ -469,11 +476,13 @@ jQuery(document).ready(function($) {
 
         // Validate before submitting (double-check)
         if (!validateScheduleFields()) {
-            showMessage('#schedule-status-message', 'Please fix the highlighted fields before saving.', 'error');
+            showMessage('#schedule-status-message', wsacsc_cleaner.validation_fix_fields_message, 'error');
+            $(this).prop('disabled', false);
             return;
         }
 
         const $button = $(this);
+        setAriaBusy(true);
         $.ajax({
             url: wsacsc_cleaner.ajax_url,
             type: 'POST',
@@ -499,7 +508,8 @@ jQuery(document).ready(function($) {
                 showMessage('#schedule-status-message', wsacsc_cleaner.error_message, 'error');
             },
             complete: function() {
-                $button.prop('disabled', false);
+                setAriaBusy(false);
+                validateScheduleFields();
             }
         });
     });
@@ -516,8 +526,9 @@ jQuery(document).ready(function($) {
         }
         
         $button.prop('disabled', true);
+        setAriaBusy(true);
         showMessage('#optimize-status-message', wsacsc_cleaner.optimizing_message, 'info', true);
-        
+
         $.ajax({
             url: wsacsc_cleaner.ajax_url,
             type: 'POST',
@@ -543,6 +554,7 @@ jQuery(document).ready(function($) {
             },
             complete: function() {
                 $button.prop('disabled', false);
+                setAriaBusy(false);
             }
         });
     });

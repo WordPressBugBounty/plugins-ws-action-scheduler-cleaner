@@ -74,8 +74,8 @@ function wsacsc_change_retention_period( $default_retention_period ): int {
 	if ( $retention_days_option === '' || ! ctype_digit( (string) $retention_days_option ) ) {
 		return $default_retention_period;
 	}
-	$retention_days = intval( $retention_days_option );
-	if ( $retention_days === 0 ) {
+	$retention_days = absint( $retention_days_option );
+	if ( 0 === $retention_days ) {
 		return 0;
 	}
 	return $retention_days * DAY_IN_SECONDS;
@@ -94,9 +94,8 @@ function wsacsc_set_cleaner_statuses( $default_statuses ): array {
 		$selected_statuses_option = array( 'complete', 'failed', 'canceled' );
 	}
 
-	$allowed_statuses  = array( 'complete', 'failed', 'canceled' );
 	$selected_statuses = array_map( 'sanitize_text_field', $selected_statuses_option );
-	$selected_statuses = array_intersect( $selected_statuses, $allowed_statuses );
+	$selected_statuses = array_intersect( $selected_statuses, wsacsc_get_allowed_action_statuses() );
 
 	return ! empty( $selected_statuses ) ? $selected_statuses : $default_statuses;
 }

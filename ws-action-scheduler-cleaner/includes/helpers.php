@@ -32,6 +32,89 @@ function wsacsc_get_allowed_action_statuses(): array {
 }
 
 /**
+ * Allowed date columns for actions retention cleanup (SQL identifier whitelist).
+ *
+ * @return string[]
+ */
+function wsacsc_get_allowed_actions_retention_date_columns(): array {
+	return array( 'completed_date_gmt', 'last_attempt_gmt', 'scheduled_date_gmt' );
+}
+
+/**
+ * Date column used for scheduled actions retention cleanup.
+ *
+ * Prefers completion/last-attempt time to match Action Scheduler's built-in cleaner.
+ *
+ * @return string One of completed_date_gmt, last_attempt_gmt, scheduled_date_gmt.
+ */
+function wsacsc_get_actions_retention_date_column(): string {
+	static $cached_column = null;
+
+	if ( null !== $cached_column ) {
+		return $cached_column;
+	}
+
+	$preferred     = array( 'completed_date_gmt', 'last_attempt_gmt', 'scheduled_date_gmt' );
+	$cached_column = 'scheduled_date_gmt';
+
+	if ( ! WSACSC_Database::check_tables_exist() ) {
+		return $cached_column;
+	}
+
+	global $wpdb;
+
+	$actions_table   = $wpdb->prefix . 'actionscheduler_actions';
+	$columns_query   = $wpdb->prepare( 'DESC %i', $actions_table );
+	$columns_result  = $wpdb->get_results( $columns_query );
+	$columns         = is_array( $columns_result ) ? wp_list_pluck( $columns_result, 'Field' ) : array();
+	$allowed_columns = wsacsc_get_allowed_actions_retention_date_columns();
+
+	foreach ( $preferred as $column ) {
+		if ( in_array( $column, $columns, true ) && in_array( $column, $allowed_columns, true ) ) {
+			$cached_column = $column;
+			break;
+		}
+	}
+
+	return $cached_column;
+}
+
+/**
+ * Build WHERE clause and parameters for scheduled actions retention cleanup.
+ *
+ * @param string[] $selected_statuses Status slugs to delete.
+ * @param int      $retention_days    Retention in days (0 = all matching statuses).
+ * @return array{where_clause: string, where_params: array} Empty where_clause if invalid.
+ */
+function wsacsc_build_actions_retention_where( array $selected_statuses, int $retention_days ): array {
+	$allowed_statuses  = wsacsc_get_allowed_action_statuses();
+	$selected_statuses = array_values( array_intersect( $selected_statuses, $allowed_statuses ) );
+
+	if ( empty( $selected_statuses ) ) {
+		return array(
+			'where_clause' => '',
+			'where_params' => array(),
+		);
+	}
+
+	$placeholders = implode( ',', array_fill( 0, count( $selected_statuses ), '%s' ) );
+
+	if ( 0 === $retention_days ) {
+		return array(
+			'where_clause' => 'status IN (' . $placeholders . ')',
+			'where_params' => $selected_statuses,
+		);
+	}
+
+	$date_column = wsacsc_get_actions_retention_date_column();
+
+	return array(
+		'where_clause' => 'status IN (' . $placeholders . ') AND `' . $date_column . '` < DATE_SUB(NOW(), INTERVAL %d DAY)',
+		'where_params' => array_merge( $selected_statuses, array( $retention_days ) ),
+	);
+}
+
+/**
  * Validate cleanup progress payload stored in a transient.
  *
  * @param mixed $progress Progress array from transient.
@@ -86,6 +169,30 @@ function wsacsc_validate_cleanup_progress( $progress ) {
 		}
 
 		foreach ( $where_params as $param ) {
+			if ( ! is_string( $param ) || ! in_array( $param, $allowed_statuses, true ) ) {
+				return false;
+			}
+		}
+	} elseif ( preg_match( '/^status IN \((%s(?:,\s*%s)*)\) AND `(completed_date_gmt|last_attempt_gmt|scheduled_date_gmt)` < DATE_SUB\(NOW\(\), INTERVAL %d DAY\)$/', $where_clause, $matches ) ) {
+		if ( $actions_table !== $table ) {
+			return false;
+		}
+
+		if ( ! in_array( $matches[2], wsacsc_get_allowed_actions_retention_date_columns(), true ) ) {
+			return false;
+		}
+
+		$status_placeholder_count = substr_count( $matches[1], '%s' );
+		if ( count( $where_params ) !== $status_placeholder_count + 1 ) {
+			return false;
+		}
+
+		$retention_days = (int) $where_params[ count( $where_params ) - 1 ];
+		if ( $retention_days < 1 || $retention_days > 365 ) {
+			return false;
+		}
+
+		foreach ( array_slice( $where_params, 0, -1 ) as $param ) {
 			if ( ! is_string( $param ) || ! in_array( $param, $allowed_statuses, true ) ) {
 				return false;
 			}
