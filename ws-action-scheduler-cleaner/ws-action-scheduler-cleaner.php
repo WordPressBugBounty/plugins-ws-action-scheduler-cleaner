@@ -2,7 +2,7 @@
 /**
  * Plugin Name: WS Action Scheduler Cleaner
  * Description: Suffering from database bloat? Try cleaning up the Action Scheduler tables through an easy-to-understand GUI.
- * Version: 1.2.9.1
+ * Version: 1.3.0
  * Author: Winning Solutions - Nagel & Mäder GbR
  * Author URI: https://www.winning-solutions.de
  * Requires at least: 6.3

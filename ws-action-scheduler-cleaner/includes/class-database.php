@@ -49,13 +49,26 @@ class WSACSC_Database {
 	}
 
 	/**
+	 * Clear cached table size data.
+	 */
+	public static function flush_table_size_cache(): void {
+		wp_cache_delete( 'wsacsc_table_sizes', self::CACHE_GROUP );
+	}
+
+	/**
 	 * Get table size data
 	 *
+	 * @param bool $force_refresh When true, bypass object cache and re-query the database.
 	 * @return array
 	 */
-	public static function get_table_size_data(): array {
+	public static function get_table_size_data( bool $force_refresh = false ): array {
 		global $wpdb;
-		$cache_key   = 'wsacsc_table_sizes';
+		$cache_key = 'wsacsc_table_sizes';
+
+		if ( $force_refresh ) {
+			self::flush_table_size_cache();
+		}
+
 		$cached_data = wp_cache_get( $cache_key, self::CACHE_GROUP );
 
 		if ( false !== $cached_data && is_array( $cached_data ) ) {

@@ -128,6 +128,7 @@ class WSACSC_Admin {
 				'validation_fix_fields_message' => __( 'Please fix the highlighted fields before saving.', 'ws-action-scheduler-cleaner' ),
 				'refresh_actions_label'         => __( 'Refresh actions table size', 'ws-action-scheduler-cleaner' ),
 				'refresh_logs_label'            => __( 'Refresh logs table size', 'ws-action-scheduler-cleaner' ),
+				'retrying_message'              => __( 'Retrying…', 'ws-action-scheduler-cleaner' ),
 			)
 		);
 	}
@@ -205,7 +206,7 @@ class WSACSC_Admin {
 				<h2><?php esc_html_e( 'Clear Action Statuses', 'ws-action-scheduler-cleaner' ); ?></h2>
 				<fieldset class="wsacsc-options">
 					<legend class="screen-reader-text"><?php esc_html_e( 'Action statuses to clear', 'ws-action-scheduler-cleaner' ); ?></legend>
-					<p id="wsacsc-status-options-desc"><?php esc_html_e( 'Select which action statuses to clear:', 'ws-action-scheduler-cleaner' ); ?></p>
+					<p id="wsacsc-status-options-desc"><?php esc_html_e( 'Select which statuses to remove when clearing manually, when this plugin runs scheduled action cleanup, and (if this plugin’s action cleanup schedule is disabled) which statuses Action Scheduler may delete in the background:', 'ws-action-scheduler-cleaner' ); ?></p>
 					<?php
 					$selected_statuses = get_option( 'wsacsc_selected_statuses', array( 'complete', 'failed', 'canceled' ) );
 					if ( ! is_array( $selected_statuses ) ) {
@@ -237,8 +238,10 @@ class WSACSC_Admin {
 			</div>
 			<div class="wsacsc-section">
 				<h2><?php esc_html_e( 'Scheduling Options', 'ws-action-scheduler-cleaner' ); ?></h2>
-				<p><?php esc_html_e( 'Cleanup Schedule and Retention Period are separate settings. Cleanup Schedule controls how often this plugin runs its own cleanup job (when set to 1–365 days). Retention Period controls how old finished actions must be before they are deleted, based on completion or last attempt time—the same basis Action Scheduler uses—not the original scheduled date.', 'ws-action-scheduler-cleaner' ); ?></p>
-				<p><?php esc_html_e( 'When a cleanup schedule is enabled, Action Scheduler\'s built-in continuous cleanup is disabled to avoid duplicate deletions; only this plugin\'s scheduled job removes old finished actions until you clear the schedule. Without a cleanup schedule, Retention Period still applies to Action Scheduler\'s background cleanup. Logs retention applies only to this plugin\'s log cleanup.', 'ws-action-scheduler-cleaner' ); ?></p>
+				<p><?php esc_html_e( 'Finished actions can be removed automatically in two ways: this plugin’s scheduled cleanup (settings below) and Action Scheduler’s own built-in background cleanup for the actions table. The status checkboxes in “Clear Action Statuses” above define which statuses are affected—manual clearing, this plugin’s scheduled action cleanup, and (when this plugin’s action cleanup schedule is disabled) Action Scheduler’s background deletions.', 'ws-action-scheduler-cleaner' ); ?></p>
+				<p><?php esc_html_e( 'Cleanup schedule and retention period are separate. Cleanup schedule controls how often this plugin runs its own WordPress cron jobs (1–365 days, or empty/0 to disable). Retention period controls how old entries must be before they are deleted. For actions, age is measured by completion or last attempt time—not the original scheduled date.', 'ws-action-scheduler-cleaner' ); ?></p>
+				<p><?php esc_html_e( 'If an actions cleanup schedule is enabled, only this plugin’s cron job deletes old actions (using the selected statuses above); Action Scheduler’s built-in action cleanup is turned off to avoid duplicate deletions. If that schedule is disabled, this plugin does not run scheduled action cleanup—the actions retention period is passed to Action Scheduler instead, which deletes actions in the selected statuses when they are older than that many days.', 'ws-action-scheduler-cleaner' ); ?></p>
+				<p><?php esc_html_e( 'Logs cleanup schedule and logs retention apply only to this plugin; Action Scheduler does not clean the logs table on its own.', 'ws-action-scheduler-cleaner' ); ?></p>
 				<p><?php esc_html_e( 'This plugin does not hide status filters on the Action Scheduler admin screen. Tabs such as Complete or Failed only appear when actions with those statuses exist in the database. On sites with a very large pending backlog, few actions may finish; if counts stay at zero, those tabs will not show.', 'ws-action-scheduler-cleaner' ); ?></p>
 				<div class="wsacsc-scheduling-options">
 					<div class="wsacsc-scheduling-group">
@@ -249,14 +252,14 @@ class WSACSC_Admin {
 								<input type="number" id="actions-schedule-interval" min="0" max="365" value="<?php echo esc_attr( get_option( 'wsacsc_actions_schedule_interval', '' ) ); ?>" aria-describedby="schedule-status-message">
 								<span><?php esc_html_e( 'days', 'ws-action-scheduler-cleaner' ); ?></span>
 							</div>
-							<p class="description"><?php esc_html_e( 'How often this plugin runs its cleanup job (empty or 0 = disabled, 1–365 days). This is not the retention period.', 'ws-action-scheduler-cleaner' ); ?></p>
+							<p class="description"><?php esc_html_e( 'This plugin only: how often its WordPress cron job deletes old actions (empty or 0 = disabled, 1–365 days). When enabled, Action Scheduler’s built-in action cleanup is disabled. This is not the retention period.', 'ws-action-scheduler-cleaner' ); ?></p>
 						</div>
 						<div class="wsacsc-scheduling-option">
 							<label for="actions-schedule-time"><?php esc_html_e( 'Schedule Time:', 'ws-action-scheduler-cleaner' ); ?></label>
 							<div class="input-wrapper">
 								<input type="time" id="actions-schedule-time" value="<?php echo esc_attr( get_option( 'wsacsc_actions_schedule_time', '' ) ); ?>" aria-describedby="schedule-status-message">
 							</div>
-							<p class="description"><?php esc_html_e( 'Time of day to run cleanup (uses WordPress timezone).', 'ws-action-scheduler-cleaner' ); ?></p>
+							<p class="description"><?php esc_html_e( 'This plugin only: time of day for its action cleanup job (WordPress timezone).', 'ws-action-scheduler-cleaner' ); ?></p>
 						</div>
 						<div class="wsacsc-scheduling-option">
 							<label for="actions-retention"><?php esc_html_e( 'Retention Period:', 'ws-action-scheduler-cleaner' ); ?></label>
@@ -264,7 +267,7 @@ class WSACSC_Admin {
 								<input type="number" id="actions-retention" min="0" max="365" required value="<?php echo esc_attr( get_option( 'wsacsc_actions_retention', '30' ) ); ?>" aria-describedby="schedule-status-message">
 								<span><?php esc_html_e( 'days', 'ws-action-scheduler-cleaner' ); ?></span>
 							</div>
-							<p class="description"><?php esc_html_e( 'Delete selected finished statuses whose completion or last attempt is older than this many days (0 = delete all matching statuses on each cleanup run, required field).', 'ws-action-scheduler-cleaner' ); ?></p>
+							<p class="description"><?php esc_html_e( 'How long to keep actions before deletion (by completion or last attempt time, not scheduled date), for the statuses selected above. With a plugin action cleanup schedule enabled: used only by this plugin’s cron job. With that schedule disabled: passed to Action Scheduler’s background cleanup for the same selected statuses. 0 = delete all matching actions on every cleanup run. Required.', 'ws-action-scheduler-cleaner' ); ?></p>
 						</div>
 					</div>
 					<div class="wsacsc-scheduling-group">
@@ -275,14 +278,14 @@ class WSACSC_Admin {
 								<input type="number" id="logs-schedule-interval" min="0" max="365" value="<?php echo esc_attr( get_option( 'wsacsc_logs_schedule_interval', '' ) ); ?>" aria-describedby="schedule-status-message">
 								<span><?php esc_html_e( 'days', 'ws-action-scheduler-cleaner' ); ?></span>
 							</div>
-							<p class="description"><?php esc_html_e( 'How often to run cleanup (empty or 0 = disabled, 1-365 days).', 'ws-action-scheduler-cleaner' ); ?></p>
+							<p class="description"><?php esc_html_e( 'This plugin only: how often its WordPress cron job deletes old log entries (empty or 0 = disabled, 1–365 days). Action Scheduler does not clean logs automatically. This is not the retention period.', 'ws-action-scheduler-cleaner' ); ?></p>
 						</div>
 						<div class="wsacsc-scheduling-option">
 							<label for="logs-schedule-time"><?php esc_html_e( 'Schedule Time:', 'ws-action-scheduler-cleaner' ); ?></label>
 							<div class="input-wrapper">
 								<input type="time" id="logs-schedule-time" value="<?php echo esc_attr( get_option( 'wsacsc_logs_schedule_time', '' ) ); ?>" aria-describedby="schedule-status-message">
 							</div>
-							<p class="description"><?php esc_html_e( 'Time of day to run cleanup (uses WordPress timezone).', 'ws-action-scheduler-cleaner' ); ?></p>
+							<p class="description"><?php esc_html_e( 'This plugin only: time of day for its log cleanup job (WordPress timezone).', 'ws-action-scheduler-cleaner' ); ?></p>
 						</div>
 						<div class="wsacsc-scheduling-option">
 							<label for="logs-retention"><?php esc_html_e( 'Retention Period:', 'ws-action-scheduler-cleaner' ); ?></label>
@@ -290,7 +293,7 @@ class WSACSC_Admin {
 								<input type="number" id="logs-retention" min="0" max="365" required value="<?php echo esc_attr( get_option( 'wsacsc_logs_retention', '30' ) ); ?>" aria-describedby="schedule-status-message">
 								<span><?php esc_html_e( 'days', 'ws-action-scheduler-cleaner' ); ?></span>
 							</div>
-							<p class="description"><?php esc_html_e( 'Delete logs older than this (0 = delete all logs, required field).', 'ws-action-scheduler-cleaner' ); ?></p>
+							<p class="description"><?php esc_html_e( 'This plugin only: delete log entries older than this many days (0 = delete all logs on each cleanup run). Required.', 'ws-action-scheduler-cleaner' ); ?></p>
 						</div>
 					</div>
 				</div>

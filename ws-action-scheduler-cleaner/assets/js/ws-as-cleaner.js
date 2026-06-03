@@ -3,6 +3,9 @@ jQuery(document).ready(function($) {
 
     const $wrap = $('.wrap.wsacsc-cleaner');
     const scheduleFieldSelector = '#actions-schedule-interval, #actions-schedule-time, #actions-retention, #logs-schedule-interval, #logs-schedule-time, #logs-retention';
+    const destructiveButtonSelector = '#clear-actions, #clear-logs, #optimize-actions, #optimize-logs';
+    const POLL_INTERVAL_MS = 650;
+    const POLL_RETRY_MAX_MS = 8000;
 
     function setAriaBusy(busy) {
         if ($wrap.length) {
@@ -10,164 +13,190 @@ jQuery(document).ready(function($) {
         }
     }
 
-    // Disable all buttons until table size and row calculations are complete
+    let destructiveOpInProgress = false;
     let initialLoadComplete = false;
     $('button.button-primary, button.button-secondary, #clear-actions').prop('disabled', true);
 
-    // Monitor checkbox changes - but only after initial load is complete
     $('input[name="status[]"]').on('change', function() {
-        if (initialLoadComplete) {  // Only handle changes after initial load
+        if (initialLoadComplete && !destructiveOpInProgress) {
             const $clearButton = $('#clear-actions');
             const hasChecked = $('input[name="status[]"]:checked').length > 0;
             $clearButton.prop('disabled', !hasChecked);
         }
     });
 
-    // Initial check on page load
     $(document).ready(function() {
         $('input[name="status[]"]').trigger('change');
     });
-   
-    // Cache for table sizes
-    let tableSizesCache = null;
-    let tableSizesCacheTime = 0;
-    const CACHE_LIFETIME = 30000; // 30 seconds
-    let isLoading = false;
 
-    // Function to update a single table's size
-    function updateSingleTableSize(tableType) {
-    if (isLoading) return;
-    
-    isLoading = true;
-    setAriaBusy(true);
-    const $refresh = $(`.wsacsc-refresh-${tableType}`);
-    $refresh.addClass('spin');
-    
-    // Only update the clicked table's loading text
-    $(`#${tableType}-count, #${tableType}-size`).text(wsacsc_cleaner.updating_text);
-
-    $.ajax({
-        url: wsacsc_cleaner.ajax_url,
-        type: 'POST',
-        data: {
-            action: 'wsacsc_get_table_sizes',
-            nonce: wsacsc_cleaner.nonce
-        },
-        success: function(response) {
-            if (response.success && response.data) {
-                // Update only the specific table's data
-                if (tableType === 'actions') {
-                    $('#actions-count').text(response.data.actions_count);
-                    $('#actions-size').text(response.data.actions_mb + ' MB');
-                } else if (tableType === 'logs') {
-                    $('#logs-count').text(response.data.logs_count);
-                    $('#logs-size').text(response.data.logs_mb + ' MB');
-                }
-            } else {
-                showMessage('#general-status-message', wsacsc_cleaner.error_message, 'error');
-                $(`#${tableType}-count`).text('0');
-                $(`#${tableType}-size`).text('0 MB');
-            }
-        },
-        error: function(xhr, status, error) {
-            console.error('AJAX Error:', status, error);
-            showMessage('#general-status-message', wsacsc_cleaner.error_message, 'error');
-            $(`#${tableType}-count`).text('0');
-            $(`#${tableType}-size`).text('0 MB');
-        },
-        complete: function() {
-            isLoading = false;
-            setAriaBusy(false);
-            $refresh.removeClass('spin');
-        }
-    });
-}
-
-    // Initial load - moved after function definition
-    updateTableSizes(true);
-
-    function updateTableSizeDisplay(data) {
-        if (!data) return;
-        
-        $('#actions-count').text(data.actions_count || '0');
-        $('#logs-count').text(data.logs_count || '0');
-        $('#actions-size').text((data.actions_mb || '0') + ' MB');
-        $('#logs-size').text((data.logs_mb || '0') + ' MB');
-    }
-
-    // Function to update table sizes with caching
-    function updateTableSizes(forceRefresh = false) {
-    const now = Date.now();
-    
-    // Disable all buttons on initial load
-    if (!initialLoadComplete) {
-        $('.wsacsc-cleaner button').prop('disabled', true);
-    }
-    
-    // Return cached data if available and not expired
-    if (!forceRefresh && tableSizesCache && (now - tableSizesCacheTime) < CACHE_LIFETIME) {
-        updateTableSizeDisplay(tableSizesCache);
-        if (!initialLoadComplete) {
-            initialLoadComplete = true;
-            $('.wsacsc-cleaner button').prop('disabled', false);
+    function setDestructiveButtonsDisabled(disabled) {
+        destructiveOpInProgress = disabled;
+        $(destructiveButtonSelector).prop('disabled', disabled);
+        $('.wsacsc-refresh').prop('disabled', disabled);
+        if (!disabled && initialLoadComplete) {
             $('input[name="status[]"]').trigger('change');
         }
-        return;
     }
 
-    // Prevent multiple simultaneous requests
-    if (isLoading) return;
-    
-    isLoading = true;
-    setAriaBusy(true);
-    $('.wsacsc-refresh').addClass('spin');
-    $('#actions-count, #logs-count, #actions-size, #logs-size').text(wsacsc_cleaner.updating_text);
+    let tableSizesCache = null;
+    let tableSizesCacheTime = 0;
+    const CACHE_LIFETIME = 30000;
+    let isLoading = false;
 
-    $.ajax({
-        url: wsacsc_cleaner.ajax_url,
-        type: 'POST',
-        data: {
-            action: 'wsacsc_get_table_sizes',
-            nonce: wsacsc_cleaner.nonce
-        },
-        success: function(response) {
-            if (response.success && response.data) {
-                tableSizesCache = response.data;
-                tableSizesCacheTime = now;
-                updateTableSizeDisplay(response.data);
-                
-                if (!initialLoadComplete) {
-                    initialLoadComplete = true;
-                    $('.wsacsc-cleaner button').prop('disabled', false);
-                    $('input[name="status[]"]').trigger('change');
-                }
-            } else {
-                showMessage('#general-status-message', response.data?.message || wsacsc_cleaner.error_message, 'error');
-                $('#actions-count, #logs-count').text('0');
-                $('#actions-size, #logs-size').text('0 MB');
-            }
-        },
-        error: function(xhr, status, error) {
-            console.error('AJAX Error:', status, error);
-            showMessage('#general-status-message', wsacsc_cleaner.error_message, 'error');
-            $('#actions-count, #logs-count').text('0');
-            $('#actions-size, #logs-size').text('0 MB');
-        },
-        complete: function() {
-            isLoading = false;
-            setAriaBusy(false);
-            $('.wsacsc-refresh').removeClass('spin');
+    function hasTableSizeData(data) {
+        return !!(
+            data &&
+            typeof data.actions_count !== 'undefined' &&
+            typeof data.logs_count !== 'undefined' &&
+            typeof data.actions_mb !== 'undefined' &&
+            typeof data.logs_mb !== 'undefined'
+        );
+    }
+
+    function updateTableSizeDisplay(data) {
+        if (!hasTableSizeData(data)) {
+            return;
         }
-    });
+
+        $('#actions-count').text(data.actions_count);
+        $('#logs-count').text(data.logs_count);
+        $('#actions-size').text(String(data.actions_mb) + ' MB');
+        $('#logs-size').text(String(data.logs_mb) + ' MB');
     }
+
+    function applyTableSizeData(data, tableType) {
+        if (!hasTableSizeData(data)) {
+            return;
+        }
+
+        tableSizesCache = data;
+        tableSizesCacheTime = Date.now();
+
+        if (tableType === 'actions') {
+            $('#actions-count').text(data.actions_count);
+            $('#actions-size').text(String(data.actions_mb) + ' MB');
+            return;
+        }
+
+        if (tableType === 'logs') {
+            $('#logs-count').text(data.logs_count);
+            $('#logs-size').text(String(data.logs_mb) + ' MB');
+            return;
+        }
+
+        updateTableSizeDisplay(data);
+    }
+
+    /**
+     * Fetch current row counts and MB sizes from the server.
+     *
+     * @param {Object} options
+     * @param {boolean} [options.force=false] Bypass client cache and destructive-op guard.
+     * @param {string|null} [options.tableType=null] When set, only update that table in the UI.
+     */
+    function fetchTableSizes(options) {
+        const opts = options || {};
+        const force = !!opts.force;
+        const tableType = opts.tableType || null;
+        const now = Date.now();
+
+        if (!initialLoadComplete) {
+            $('.wsacsc-cleaner button').prop('disabled', true);
+        }
+
+        if (!force && tableSizesCache && (now - tableSizesCacheTime) < CACHE_LIFETIME) {
+            applyTableSizeData(tableSizesCache, tableType);
+            if (!initialLoadComplete) {
+                initialLoadComplete = true;
+                $('.wsacsc-cleaner button').prop('disabled', false);
+                $('input[name="status[]"]').trigger('change');
+            }
+            return;
+        }
+
+        if (!force && (isLoading || destructiveOpInProgress)) {
+            return;
+        }
+
+        isLoading = true;
+        setAriaBusy(true);
+
+        const $refreshButtons = tableType ? $('.wsacsc-refresh-' + tableType) : $('.wsacsc-refresh');
+        $refreshButtons.addClass('spin');
+
+        if (tableType) {
+            $(`#${tableType}-count, #${tableType}-size`).text(wsacsc_cleaner.updating_text);
+        } else {
+            $('#actions-count, #logs-count, #actions-size, #logs-size').text(wsacsc_cleaner.updating_text);
+        }
+
+        $.ajax({
+            url: wsacsc_cleaner.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'wsacsc_get_table_sizes',
+                nonce: wsacsc_cleaner.nonce
+            },
+            success: function(response) {
+                if (response.success && hasTableSizeData(response.data)) {
+                    applyTableSizeData(response.data, tableType);
+
+                    if (!initialLoadComplete) {
+                        initialLoadComplete = true;
+                        $('.wsacsc-cleaner button').prop('disabled', false);
+                        $('input[name="status[]"]').trigger('change');
+                    }
+                } else {
+                    showMessage('#general-status-message', response.data?.message || wsacsc_cleaner.error_message, 'error');
+                    if (tableType) {
+                        $(`#${tableType}-count`).text('0');
+                        $(`#${tableType}-size`).text('0 MB');
+                    } else {
+                        $('#actions-count, #logs-count').text('0');
+                        $('#actions-size, #logs-size').text('0 MB');
+                    }
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX Error:', status, error);
+                showMessage('#general-status-message', wsacsc_cleaner.error_message, 'error');
+                if (tableType) {
+                    $(`#${tableType}-count`).text('0');
+                    $(`#${tableType}-size`).text('0 MB');
+                } else {
+                    $('#actions-count, #logs-count').text('0');
+                    $('#actions-size, #logs-size').text('0 MB');
+                }
+            },
+            complete: function() {
+                isLoading = false;
+                if (!destructiveOpInProgress) {
+                    setAriaBusy(false);
+                }
+                $refreshButtons.removeClass('spin');
+            }
+        });
+    }
+
+    function updateSingleTableSize(tableType) {
+        fetchTableSizes({ tableType: tableType });
+    }
+
+    function updateTableSizes(forceRefresh) {
+        fetchTableSizes({ force: !!forceRefresh });
+    }
+
+    fetchTableSizes({ force: true });
 
     $('.wsacsc-refresh').on('click', function(e) {
         e.preventDefault();
+        if (destructiveOpInProgress) {
+            return;
+        }
         const tableType = $(this).hasClass('wsacsc-refresh-actions') ? 'actions' : 'logs';
-        updateSingleTableSize(tableType);
+        fetchTableSizes({ tableType: tableType, force: true });
     });
 
-    // Function to save selected statuses
     function saveSelectedStatuses() {
         var selectedStatuses = [];
         $('input[name="status[]"]:checked').each(function() {
@@ -182,15 +211,12 @@ jQuery(document).ready(function($) {
                 nonce: wsacsc_cleaner.nonce,
                 statuses: selectedStatuses
             },
-            success: function(response) {
-            },
             error: function() {
                 showMessage('#status-save-message', wsacsc_cleaner.error_message, 'error');
             }
         });
     }
 
-    // Helper function to show messages with proper transitions
     function showMessage(selector, message, type, persistent) {
         const $message = $(selector);
 
@@ -223,15 +249,25 @@ jQuery(document).ready(function($) {
         }
     }
 
-    // Call saveSelectedStatuses when checkboxes are changed
     $('input[name="status[]"]').change(function() {
         saveSelectedStatuses();
     });
 
-    // Function to poll cleanup progress
-    function pollCleanupProgress(cleanupId, messageSelector, buttonSelector, tableType) {
-        const $button = $(buttonSelector);
-        
+    function refreshTableSizesAfterDestructive(tableType) {
+        tableSizesCache = null;
+        tableSizesCacheTime = 0;
+        fetchTableSizes({ force: true, tableType: tableType || null });
+    }
+
+    function finishDestructiveOp(messageSelector, tableType) {
+        setDestructiveButtonsDisabled(false);
+        setAriaBusy(false);
+        refreshTableSizesAfterDestructive(tableType);
+    }
+
+    function pollCleanupProgress(cleanupId, messageSelector, tableType) {
+        let pollBackoff = POLL_INTERVAL_MS;
+
         function checkProgress() {
             $.ajax({
                 url: wsacsc_cleaner.ajax_url,
@@ -242,43 +278,68 @@ jQuery(document).ready(function($) {
                     cleanup_id: cleanupId
                 },
                 success: function(response) {
-                    if (response.success) {
-                        if (response.data.completed) {
-                            showMessage(messageSelector, response.data.message, 'success');
-                            $button.prop('disabled', false);
-                            setAriaBusy(false);
-                            if (tableType) {
-                                updateSingleTableSize(tableType);
-                            }
-                        } else {
-                            showMessage(messageSelector, response.data.message, 'info', true);
-                            setTimeout(checkProgress, 1000);
-                        }
-                    } else {
+                    pollBackoff = POLL_INTERVAL_MS;
+
+                    if (!response.success) {
                         showMessage(messageSelector, response.data?.message || wsacsc_cleaner.error_message, 'error');
-                        $button.prop('disabled', false);
-                        setAriaBusy(false);
+                        finishDestructiveOp(messageSelector, null);
+                        return;
                     }
+
+                    if (response.data.stale) {
+                        showMessage(messageSelector, response.data.message, 'info', true);
+                        finishDestructiveOp(messageSelector, tableType);
+                        return;
+                    }
+
+                    if (response.data.completed) {
+                        showMessage(messageSelector, response.data.message, 'success');
+                        finishDestructiveOp(messageSelector, tableType);
+                        return;
+                    }
+
+                    showMessage(messageSelector, response.data.message || wsacsc_cleaner.clearing_message, 'info', true);
+                    setTimeout(checkProgress, POLL_INTERVAL_MS);
                 },
                 error: function() {
-                    showMessage(messageSelector, wsacsc_cleaner.error_message, 'error');
-                    $button.prop('disabled', false);
-                    setAriaBusy(false);
+                    showMessage(messageSelector, wsacsc_cleaner.error_message + ' ' + (wsacsc_cleaner.retrying_message || ''), 'error');
+                    pollBackoff = Math.min(pollBackoff * 2, POLL_RETRY_MAX_MS);
+                    setTimeout(checkProgress, pollBackoff);
                 }
             });
         }
-        
-        setTimeout(checkProgress, 1000);
+
+        setTimeout(checkProgress, POLL_INTERVAL_MS);
     }
 
-    // Clear actions functionality
-    $('#clear-actions').click(function() {
-        // Prevent double-clicking
-        if ($(this).prop('disabled')) {
+    function handleCleanupStart(response, messageSelector, successMessage, tableType) {
+        if (!response.success) {
+            const msg = response.data?.message || wsacsc_cleaner.error_message;
+            showMessage(messageSelector, msg, 'error');
+            finishDestructiveOp(messageSelector, null);
             return;
         }
-        $(this).prop('disabled', true);
-        setAriaBusy(true);
+
+        if (response.data.completed) {
+            showMessage(messageSelector, response.data.message || successMessage, 'success');
+            finishDestructiveOp(messageSelector, tableType);
+            return;
+        }
+
+        if (response.data.cleanup_id) {
+            showMessage(messageSelector, response.data.message || wsacsc_cleaner.clearing_message, 'info', true);
+            pollCleanupProgress(response.data.cleanup_id, messageSelector, tableType);
+            return;
+        }
+
+        showMessage(messageSelector, wsacsc_cleaner.error_message, 'error');
+        finishDestructiveOp(messageSelector, null);
+    }
+
+    $('#clear-actions').click(function() {
+        if ($(this).prop('disabled') || destructiveOpInProgress) {
+            return;
+        }
 
         var selectedStatuses = [];
         $('input[name="status[]"]:checked').each(function() {
@@ -287,15 +348,13 @@ jQuery(document).ready(function($) {
 
         if (selectedStatuses.length === 0) {
             showMessage('#actions-status-message', wsacsc_cleaner.select_status_message, 'error');
-            $(this).prop('disabled', false);
-            setAriaBusy(false);
             return;
         }
 
+        setDestructiveButtonsDisabled(true);
+        setAriaBusy(true);
         showMessage('#actions-status-message', wsacsc_cleaner.clearing_message, 'info', true);
 
-        const $button = $(this);
-        const $message = $('#actions-status-message');
         $.ajax({
             url: wsacsc_cleaner.ajax_url,
             type: 'POST',
@@ -305,43 +364,29 @@ jQuery(document).ready(function($) {
                 statuses: selectedStatuses
             },
             success: function(response) {
-                if (response.success) {
-                    if (response.data.completed) {
-                        showMessage('#actions-status-message', response.data.message, 'success');
-                        $button.prop('disabled', false);
-                        setAriaBusy(false);
-                        updateSingleTableSize('actions');
-                    } else {
-                        showMessage('#actions-status-message', response.data.message, 'info', true);
-                        pollCleanupProgress(response.data.cleanup_id, '#actions-status-message', '#clear-actions', 'actions');
-                    }
-                } else {
-                    showMessage('#actions-status-message', response.data?.message || wsacsc_cleaner.error_message, 'error');
-                    $button.prop('disabled', false);
-                    setAriaBusy(false);
-                }
+                handleCleanupStart(
+                    response,
+                    '#actions-status-message',
+                    wsacsc_cleaner.success_actions_cleared,
+                    'actions'
+                );
             },
             error: function() {
                 showMessage('#actions-status-message', wsacsc_cleaner.error_message, 'error');
-                $button.prop('disabled', false);
-                setAriaBusy(false);
+                finishDestructiveOp('#actions-status-message', null);
             }
         });
     });
 
-    // Clear logs functionality
     $('#clear-logs').click(function() {
-        // Prevent double-clicking
-        if ($(this).prop('disabled')) {
+        if ($(this).prop('disabled') || destructiveOpInProgress) {
             return;
         }
-        $(this).prop('disabled', true);
-        setAriaBusy(true);
 
+        setDestructiveButtonsDisabled(true);
+        setAriaBusy(true);
         showMessage('#logs-status-message', wsacsc_cleaner.clearing_message, 'info', true);
 
-        const $button = $(this);
-        const $message = $('#logs-status-message');
         $.ajax({
             url: wsacsc_cleaner.ajax_url,
             type: 'POST',
@@ -350,36 +395,25 @@ jQuery(document).ready(function($) {
                 nonce: wsacsc_cleaner.nonce
             },
             success: function(response) {
-                if (response.success) {
-                    if (response.data.completed) {
-                        showMessage('#logs-status-message', response.data.message, 'success');
-                        $button.prop('disabled', false);
-                        setAriaBusy(false);
-                        updateSingleTableSize('logs');
-                    } else {
-                        showMessage('#logs-status-message', response.data.message, 'info', true);
-                        pollCleanupProgress(response.data.cleanup_id, '#logs-status-message', '#clear-logs', 'logs');
-                    }
-                } else {
-                    showMessage('#logs-status-message', response.data?.message || wsacsc_cleaner.error_message, 'error');
-                    $button.prop('disabled', false);
-                    setAriaBusy(false);
-                }
+                handleCleanupStart(
+                    response,
+                    '#logs-status-message',
+                    wsacsc_cleaner.success_logs_cleared,
+                    'logs'
+                );
             },
             error: function() {
                 showMessage('#logs-status-message', wsacsc_cleaner.error_message, 'error');
-                $button.prop('disabled', false);
-                setAriaBusy(false);
+                finishDestructiveOp('#logs-status-message', null);
             }
         });
     });
 
-    // Validation function for schedule fields
     function validateScheduleFields() {
         var isValid = true;
 
         $(scheduleFieldSelector).removeClass('wsacsc-field-error').attr('aria-invalid', 'false');
-        
+
         var actionsScheduleInterval = $('#actions-schedule-interval').val();
         var actionsScheduleTime = $('#actions-schedule-time').val();
         var actionsRetention = $('#actions-retention').val();
@@ -387,7 +421,6 @@ jQuery(document).ready(function($) {
         var logsScheduleTime = $('#logs-schedule-time').val();
         var logsRetention = $('#logs-retention').val();
 
-        // Treat 0 as empty for schedule interval
         if (actionsScheduleInterval === '0') {
             actionsScheduleInterval = '';
         }
@@ -395,7 +428,6 @@ jQuery(document).ready(function($) {
             logsScheduleInterval = '';
         }
 
-        // Validate actions schedule interval
         if (actionsScheduleInterval !== '') {
             var actionsIntervalNum = parseInt(actionsScheduleInterval, 10);
             if (isNaN(actionsIntervalNum) || actionsIntervalNum < 1 || actionsIntervalNum > 365) {
@@ -404,7 +436,6 @@ jQuery(document).ready(function($) {
             }
         }
 
-        // Validate logs schedule interval
         if (logsScheduleInterval !== '') {
             var logsIntervalNum = parseInt(logsScheduleInterval, 10);
             if (isNaN(logsIntervalNum) || logsIntervalNum < 1 || logsIntervalNum > 365) {
@@ -413,7 +444,6 @@ jQuery(document).ready(function($) {
             }
         }
 
-        // Validate schedule times (HH:MM format)
         if (actionsScheduleTime !== '' && !/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/.test(actionsScheduleTime)) {
             $('#actions-schedule-time').addClass('wsacsc-field-error').attr('aria-invalid', 'true');
             isValid = false;
@@ -424,7 +454,6 @@ jQuery(document).ready(function($) {
             isValid = false;
         }
 
-        // Validate retention periods (required, 0-365)
         var actionsRetentionNum = parseInt(actionsRetention, 10);
         if (actionsRetention === '' || isNaN(actionsRetentionNum) || actionsRetentionNum < 0 || actionsRetentionNum > 365) {
             $('#actions-retention').addClass('wsacsc-field-error').attr('aria-invalid', 'true');
@@ -437,23 +466,18 @@ jQuery(document).ready(function($) {
             isValid = false;
         }
 
-        // Enable/disable save button
-        $('#save-schedule').prop('disabled', !isValid);
-        
+        $('#save-schedule').prop('disabled', !isValid || destructiveOpInProgress);
+
         return isValid;
     }
 
-    // Add real-time validation on field changes
     $(scheduleFieldSelector).on('input change blur', function() {
         validateScheduleFields();
     });
 
-    // Initial validation on page load
     validateScheduleFields();
 
-    // Save schedule functionality
     $('#save-schedule').click(function() {
-        // Prevent double-clicking
         if ($(this).prop('disabled')) {
             return;
         }
@@ -466,7 +490,6 @@ jQuery(document).ready(function($) {
         var logsScheduleTime = $('#logs-schedule-time').val();
         var logsRetention = $('#logs-retention').val();
 
-        // Treat 0 as empty for schedule interval
         if (actionsScheduleInterval === '0') {
             actionsScheduleInterval = '';
         }
@@ -474,14 +497,12 @@ jQuery(document).ready(function($) {
             logsScheduleInterval = '';
         }
 
-        // Validate before submitting (double-check)
         if (!validateScheduleFields()) {
             showMessage('#schedule-status-message', wsacsc_cleaner.validation_fix_fields_message, 'error');
-            $(this).prop('disabled', false);
+            validateScheduleFields();
             return;
         }
 
-        const $button = $(this);
         setAriaBusy(true);
         $.ajax({
             url: wsacsc_cleaner.ajax_url,
@@ -508,24 +529,23 @@ jQuery(document).ready(function($) {
                 showMessage('#schedule-status-message', wsacsc_cleaner.error_message, 'error');
             },
             complete: function() {
-                setAriaBusy(false);
+                if (!destructiveOpInProgress) {
+                    setAriaBusy(false);
+                }
                 validateScheduleFields();
             }
         });
     });
 
-    // Optimize tables functionality
     $('#optimize-actions, #optimize-logs').on('click', function() {
-        const tableType = $(this).attr('id').replace('optimize-', '');
-        const $button = $(this);
-        const $message = $('#optimize-status-message');
-        
-        // Prevent double-clicking
-        if ($button.prop('disabled')) {
+        if ($(this).prop('disabled') || destructiveOpInProgress) {
             return;
         }
-        
-        $button.prop('disabled', true);
+
+        const tableType = $(this).attr('id').replace('optimize-', '');
+        const $button = $(this);
+
+        setDestructiveButtonsDisabled(true);
         setAriaBusy(true);
         showMessage('#optimize-status-message', wsacsc_cleaner.optimizing_message, 'info', true);
 
@@ -540,10 +560,10 @@ jQuery(document).ready(function($) {
             success: function(response) {
                 if (response.success) {
                     showMessage('#optimize-status-message', response.data.message, 'success');
-                    updateSingleTableSize(tableType);
                 } else {
-                    showMessage('#optimize-status-message', 
-                        response.data?.message || wsacsc_cleaner.table_optimization_failed, 
+                    showMessage(
+                        '#optimize-status-message',
+                        response.data?.message || wsacsc_cleaner.table_optimization_failed,
                         'error'
                     );
                 }
@@ -553,8 +573,7 @@ jQuery(document).ready(function($) {
                 showMessage('#optimize-status-message', wsacsc_cleaner.error_message, 'error');
             },
             complete: function() {
-                $button.prop('disabled', false);
-                setAriaBusy(false);
+                finishDestructiveOp('#optimize-status-message', tableType);
             }
         });
     });

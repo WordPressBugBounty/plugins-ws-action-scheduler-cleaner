@@ -158,6 +158,14 @@ function wsacsc_validate_cleanup_progress( $progress ) {
 		if ( $logs_table !== $table || ! empty( $where_params ) ) {
 			return false;
 		}
+	} elseif ( '`log_date_gmt` < DATE_SUB(NOW(), INTERVAL %d DAY)' === $where_clause ) {
+		if ( $logs_table !== $table || 1 !== count( $where_params ) ) {
+			return false;
+		}
+		$retention_days = (int) $where_params[0];
+		if ( $retention_days < 1 || $retention_days > 365 ) {
+			return false;
+		}
 	} elseif ( preg_match( '/^status IN \((%s(?:,\s*%s)*)\)$/', $where_clause ) ) {
 		if ( $actions_table !== $table ) {
 			return false;
@@ -208,5 +216,31 @@ function wsacsc_validate_cleanup_progress( $progress ) {
 
 	$progress['batch_size'] = $batch_size;
 
+	if ( isset( $progress['total_deleted'] ) ) {
+		$progress['total_deleted'] = max( 0, (int) $progress['total_deleted'] );
+	}
+
+	if ( isset( $progress['context'] ) && ! in_array( $progress['context'], array( 'ajax', 'cron' ), true ) ) {
+		return false;
+	}
+
 	return $progress;
+}
+
+/**
+ * Format in-progress cleanup message with rows deleted.
+ *
+ * @param int $total_deleted Rows deleted so far.
+ * @return string
+ */
+function wsacsc_format_cleanup_progress_message( int $total_deleted ): string {
+	if ( $total_deleted <= 0 ) {
+		return __( 'Clearing in progress...', 'ws-action-scheduler-cleaner' );
+	}
+
+	return sprintf(
+		/* translators: %s: number of rows deleted so far. */
+		__( 'Clearing in progress… %s rows deleted so far.', 'ws-action-scheduler-cleaner' ),
+		number_format_i18n( $total_deleted )
+	);
 }

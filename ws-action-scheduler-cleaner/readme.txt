@@ -3,7 +3,7 @@ Contributors: winningsolutions
 Donate link: https://www.winning-solutions.de
 Requires at least: 6.3
 Tested up to: 7.0
-Stable tag: 1.2.9.1
+Stable tag: 1.3.0
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -76,6 +76,12 @@ For best results, we recommend setting up an automatic clearing schedule to main
 
 == Changelog ==
 
+= 2026-05-25: 1.3.0 =
+* **More reliable cleanup performance**: Manual AJAX cleanup now uses time-bounded chunks with progress saved after each batch; scheduled cron uses gentler defaults.
+* **Prevent DB contention**: Add global lock to prevent parallel clear/optimize operations. This was mainly relevant on sites with huge tables that would take a long time to clear.
+* **Table size bugfix**: Sometimes, the table size would not get updated correctly.
+* **Add filters for custom setups**: `wsacsc_ajax_cleanup_batch_size`, `wsacsc_ajax_cleanup_max_seconds`, `wsacsc_cron_cleanup_batch_size`, `wsacsc_cron_cleanup_max_seconds`, `wsacsc_cleanup_use_background_continuation`, `wsacsc_scheduled_auto_optimize_max_rows`, `wsacsc_scheduled_auto_optimize_delay_seconds`.
+
 = 2026-05-22: 1.2.9.1 =
 **Fix**: Minor CSS fix with Modern styles.
 
@@ -125,6 +131,9 @@ For best results, we recommend setting up an automatic clearing schedule to main
 
 == Upgrade Notice ==
 
+= 1.3.0 =
+* More reliable cleanup on large Action Scheduler tables: time-bounded chunks, saved progress, and a global lock to prevent overlapping clear/optimize jobs. Scheduled cleanup may auto-optimize small tables after retention runs. Recommended for all users; especially sites with larges tables or custom tuning via the new developer filters.
+
 = 1.2.7 =
 * Fixes retention cleanup to use completion/last-attempt time on busy Action Scheduler queues. Recommended for sites that only see Pending on the Scheduled Actions screen.
 
@@ -141,6 +150,37 @@ For best results, we recommend setting up an automatic clearing schedule to main
 * The initial release of the plugin.
 
 == Developer Information ==
+
+Cleanup and optimization run in time-bounded chunks: each pass deletes up to `batch_size` rows per SQL statement and repeats until `max_seconds` elapses or no matching rows remain. Progress is saved between chunks so large tables can be processed without a single long request.
+
+The following filters (since 1.3.0) let you tune behavior for your hosting environment. Add them in a custom plugin or your theme's `functions.php`.
+
+= Manual cleanup (admin UI / AJAX) =
+
+* `wsacsc_ajax_cleanup_batch_size` (default: `10000`) — Maximum rows deleted per `DELETE` statement during manual clear operations initiated from the admin screen. Higher values can speed up very large tables but increase load per query.
+* `wsacsc_ajax_cleanup_max_seconds` (default: `18`) — Seconds of work per AJAX request before the plugin saves progress and returns. The admin UI polls for the next chunk while you keep the page open. Increase on slow hosts if chunks finish too quickly; decrease if requests time out.
+
+= Scheduled cleanup (WP-Cron) =
+
+* `wsacsc_cron_cleanup_batch_size` (default: `2000`) — Same as the AJAX batch size, but for automatic retention cleanup run on a schedule. Defaults are lower than manual cleanup to reduce impact on live traffic.
+* `wsacsc_cron_cleanup_max_seconds` (default: `45`) — Seconds of work per cron run before the job pauses and schedules continuation (see below).
+
+= Background continuation =
+
+* `wsacsc_cleanup_use_background_continuation` (default: `true`) — When a chunk ends before deletion is finished, schedule a single WP-Cron event to resume the job in the background. This is important for scheduled cleanup on large tables and when no admin session is polling progress. Manual cleanup in the browser also continues via AJAX polling; setting this filter to `false` disables cron-based resumption only (unfinished scheduled jobs may stall unless something else triggers the next chunk).
+
+= Scheduled auto-optimize =
+
+After a scheduled retention pass deletes all matching rows for a table, the plugin may run `OPTIMIZE TABLE` automatically to reclaim disk space. Manual clear from the admin UI never auto-optimizes; use the Optimize button instead.
+
+* `wsacsc_scheduled_auto_optimize_max_rows` (default: `100000`) — Run auto-optimize only if the table's total row count is at or below this value after cleanup. Prevents long, blocking optimize operations on tables that are still huge. Values below `1000` are raised to `1000`.
+* `wsacsc_scheduled_auto_optimize_delay_seconds` (default: `5`) — Seconds to wait after the last delete batch before running `OPTIMIZE TABLE`, giving the database a short breather. Clamped between `0` and `60`.
+
+Example (gentler cron, no background continuation):
+
+    add_filter( 'wsacsc_cron_cleanup_batch_size', function () { return 500; } );
+    add_filter( 'wsacsc_cron_cleanup_max_seconds', function () { return 30; } );
+    add_filter( 'wsacsc_cleanup_use_background_continuation', '__return_false' );
 
 Author: Winning Solutions
 Author URI: [https://www.winning-solutions.de](https://www.winning-solutions.de)

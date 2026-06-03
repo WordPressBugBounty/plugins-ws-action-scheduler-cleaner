@@ -83,6 +83,8 @@ class WSACSC_Activation {
 
 		$hook_names = array( 'wsacsc_cleanup_logs', 'wsacsc_cleanup_actions' );
 		WSACSC_Scheduler::winningsolutions_force_clear_cron_hooks( $hook_names );
+		wp_clear_scheduled_hook( WSACSC_Cleanup::CONTINUE_HOOK );
+		delete_transient( WSACSC_Cleanup::ACTIVE_JOB_KEY );
 
 		$plugin_options = array(
 			'wsacsc_logs_retention',

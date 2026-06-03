@@ -29,6 +29,49 @@ class WSACSC_Ajax {
 	}
 
 	/**
+	 * Send error when another destructive job is already running.
+	 */
+	private static function reject_concurrent_job(): void {
+		wp_send_json_error(
+			array(
+				'message' => __( 'Another cleanup or optimization is already running. Please wait until it finishes.', 'ws-action-scheduler-cleaner' ),
+				'code'    => 'job_locked',
+			)
+		);
+	}
+
+	/**
+	 * Build JSON payload for an in-progress cleanup response.
+	 *
+	 * @param string $cleanup_id    Cleanup ID.
+	 * @param array  $result        Result from process_chunk / process_ajax_batch.
+	 * @param string $done_message  Message when completed successfully.
+	 * @return array<string, mixed>
+	 */
+	private static function build_cleanup_response( string $cleanup_id, array $result, string $done_message ): array {
+		$total_deleted = isset( $result['total_deleted'] ) ? (int) $result['total_deleted'] : 0;
+
+		if ( ! empty( $result['completed'] ) && empty( $result['error'] ) ) {
+			return array_merge(
+				WSACSC_Database::get_table_size_data( true ),
+				array(
+					'message'       => $done_message,
+					'cleanup_id'    => $cleanup_id,
+					'completed'     => true,
+					'total_deleted' => $total_deleted,
+				)
+			);
+		}
+
+		return array(
+			'message'       => wsacsc_format_cleanup_progress_message( $total_deleted ),
+			'cleanup_id'    => $cleanup_id,
+			'completed'     => false,
+			'total_deleted' => $total_deleted,
+		);
+	}
+
+	/**
 	 * Get table sizes
 	 */
 	public static function get_table_sizes(): void {
@@ -70,37 +113,32 @@ class WSACSC_Ajax {
 			wp_send_json_error( array( 'message' => __( 'Action Scheduler tables do not exist.', 'ws-action-scheduler-cleaner' ) ) );
 		}
 
+		$cleanup_id = 'actions_' . wp_generate_password( 12, false );
+
+		if ( ! WSACSC_Cleanup::acquire_job_lock( $cleanup_id, 'cleanup', $wpdb->prefix . 'actionscheduler_actions', true ) ) {
+			self::reject_concurrent_job();
+		}
+
 		$actions_table = $wpdb->prefix . 'actionscheduler_actions';
 		$placeholders  = implode( ',', array_fill( 0, count( $statuses ), '%s' ) );
 		$where_clause  = 'status IN (' . $placeholders . ')';
 		$where_params  = $statuses;
 
-		$cleanup_id = 'actions_' . wp_generate_password( 12, false );
-		$batch_size = 50000;
+		WSACSC_Cleanup::create_progress_job( $cleanup_id, $actions_table, $where_clause, $where_params, 'ajax' );
 
-		$result = WSACSC_Cleanup::process_ajax_batch( $cleanup_id, $actions_table, $where_clause, $where_params, $batch_size );
+		$result = WSACSC_Cleanup::process_chunk( $cleanup_id, 'ajax' );
 
-		if ( $result['completed'] ) {
-			wp_cache_delete( 'wsacsc_table_sizes', WSACSC_Database::CACHE_GROUP );
-			wp_send_json_success(
-				array_merge(
-					WSACSC_Database::get_table_size_data(),
-					array(
-						'message'    => __( 'Selected actions cleared successfully!', 'ws-action-scheduler-cleaner' ),
-						'cleanup_id' => $cleanup_id,
-						'completed'  => true,
-					)
-				)
-			);
-		} else {
-			wp_send_json_success(
-				array(
-					'message'    => __( 'Clearing in progress...', 'ws-action-scheduler-cleaner' ),
-					'cleanup_id' => $cleanup_id,
-					'completed'  => false,
-				)
-			);
+		if ( ! empty( $result['error'] ) ) {
+			wp_send_json_error( array( 'message' => __( 'An error occurred while clearing actions.', 'ws-action-scheduler-cleaner' ) ) );
 		}
+
+		wp_send_json_success(
+			self::build_cleanup_response(
+				$cleanup_id,
+				$result,
+				__( 'Selected actions cleared successfully!', 'ws-action-scheduler-cleaner' )
+			)
+		);
 	}
 
 	/**
@@ -125,31 +163,26 @@ class WSACSC_Ajax {
 		$where_params = array();
 
 		$cleanup_id = 'logs_' . wp_generate_password( 12, false );
-		$batch_size = 50000;
 
-		$result = WSACSC_Cleanup::process_ajax_batch( $cleanup_id, $logs_table, $where_clause, $where_params, $batch_size );
-
-		if ( $result['completed'] ) {
-			wp_cache_delete( 'wsacsc_table_sizes', WSACSC_Database::CACHE_GROUP );
-			wp_send_json_success(
-				array_merge(
-					WSACSC_Database::get_table_size_data(),
-					array(
-						'message'    => __( 'Logs cleared successfully!', 'ws-action-scheduler-cleaner' ),
-						'cleanup_id' => $cleanup_id,
-						'completed'  => true,
-					)
-				)
-			);
-		} else {
-			wp_send_json_success(
-				array(
-					'message'    => __( 'Clearing in progress...', 'ws-action-scheduler-cleaner' ),
-					'cleanup_id' => $cleanup_id,
-					'completed'  => false,
-				)
-			);
+		if ( ! WSACSC_Cleanup::acquire_job_lock( $cleanup_id, 'cleanup', $logs_table, true ) ) {
+			self::reject_concurrent_job();
 		}
+
+		WSACSC_Cleanup::create_progress_job( $cleanup_id, $logs_table, $where_clause, $where_params, 'ajax' );
+
+		$result = WSACSC_Cleanup::process_chunk( $cleanup_id, 'ajax' );
+
+		if ( ! empty( $result['error'] ) ) {
+			wp_send_json_error( array( 'message' => __( 'An error occurred while clearing logs.', 'ws-action-scheduler-cleaner' ) ) );
+		}
+
+		wp_send_json_success(
+			self::build_cleanup_response(
+				$cleanup_id,
+				$result,
+				__( 'Logs cleared successfully!', 'ws-action-scheduler-cleaner' )
+			)
+		);
 	}
 
 	/**
@@ -380,6 +413,14 @@ class WSACSC_Ajax {
 			wp_send_json_error( array( 'message' => __( 'Invalid table type.', 'ws-action-scheduler-cleaner' ) ) );
 		}
 
+		global $wpdb;
+		$table_name = $wpdb->prefix . 'actionscheduler_' . $table_type;
+		$cleanup_id = 'optimize_' . $table_type . '_' . wp_generate_password( 8, false );
+
+		if ( ! WSACSC_Cleanup::acquire_job_lock( $cleanup_id, 'optimize', $table_name, true ) ) {
+			self::reject_concurrent_job();
+		}
+
 		$result = false;
 		if ( 'logs' === $table_type ) {
 			$result = WSACSC_Cleanup::optimize_logs_table();
@@ -387,15 +428,15 @@ class WSACSC_Ajax {
 			$result = WSACSC_Cleanup::optimize_actions_table();
 		}
 
+		WSACSC_Cleanup::release_job_lock( $cleanup_id );
+
 		if ( false === $result ) {
 			wp_send_json_error( array( 'message' => __( 'Table optimization failed.', 'ws-action-scheduler-cleaner' ) ) );
 		}
 
-		wp_cache_delete( 'wsacsc_table_sizes', WSACSC_Database::CACHE_GROUP );
-
 		wp_send_json_success(
 			array_merge(
-				WSACSC_Database::get_table_size_data(),
+				WSACSC_Database::get_table_size_data( true ),
 				array(
 					/* translators: %s: table type (actions or logs). */
 					'message'    => sprintf( __( '%s table optimized successfully!', 'ws-action-scheduler-cleaner' ), ucfirst( $table_type ) ),
@@ -422,50 +463,53 @@ class WSACSC_Ajax {
 			wp_send_json_error( array( 'message' => __( 'Invalid cleanup ID.', 'ws-action-scheduler-cleaner' ) ) );
 		}
 
-		$transient_key = 'wsacsc_cleanup_' . $cleanup_id;
-		$progress      = get_transient( $transient_key );
+		$progress = WSACSC_Cleanup::load_progress( $cleanup_id );
 
 		if ( false === $progress ) {
 			wp_send_json_success(
 				array(
-					'completed' => true,
-					'message'   => __( 'Cleanup completed.', 'ws-action-scheduler-cleaner' ),
+					'completed'     => false,
+					'stale'         => true,
+					'total_deleted' => 0,
+					'message'       => __( 'Cleanup progress was lost or is continuing in the background. Refresh the page to check table sizes.', 'ws-action-scheduler-cleaner' ),
 				)
 			);
 		}
 
 		$progress = wsacsc_validate_cleanup_progress( $progress );
 		if ( false === $progress ) {
-			delete_transient( $transient_key );
+			WSACSC_Cleanup::delete_progress( $cleanup_id );
+			WSACSC_Cleanup::release_job_lock( $cleanup_id );
 			wp_send_json_error( array( 'message' => __( 'Invalid cleanup progress data.', 'ws-action-scheduler-cleaner' ) ) );
 		}
 
-		$result = WSACSC_Cleanup::process_ajax_batch(
-			$cleanup_id,
-			$progress['table'],
-			$progress['where_clause'],
-			$progress['where_params'],
-			$progress['batch_size']
-		);
+		$result = WSACSC_Cleanup::process_chunk( $cleanup_id, 'ajax' );
 
-		if ( $result['completed'] ) {
-			wp_cache_delete( 'wsacsc_table_sizes', WSACSC_Database::CACHE_GROUP );
+		if ( ! empty( $result['error'] ) ) {
+			wp_send_json_error( array( 'message' => __( 'An error occurred during cleanup.', 'ws-action-scheduler-cleaner' ) ) );
+		}
+
+		$total_deleted = (int) $result['total_deleted'];
+
+		if ( ! empty( $result['completed'] ) ) {
 			wp_send_json_success(
 				array_merge(
-					WSACSC_Database::get_table_size_data(),
+					WSACSC_Database::get_table_size_data( true ),
 					array(
-						'completed' => true,
-						'message'   => __( 'Cleanup completed successfully!', 'ws-action-scheduler-cleaner' ),
+						'completed'     => true,
+						'total_deleted' => $total_deleted,
+						'message'       => __( 'Cleanup completed successfully!', 'ws-action-scheduler-cleaner' ),
 					)
 				)
 			);
-		} else {
-			wp_send_json_success(
-				array(
-					'completed' => false,
-					'message'   => __( 'Clearing in progress...', 'ws-action-scheduler-cleaner' ),
-				)
-			);
 		}
+
+		wp_send_json_success(
+			array(
+				'completed'     => false,
+				'total_deleted' => $total_deleted,
+				'message'       => wsacsc_format_cleanup_progress_message( $total_deleted ),
+			)
+		);
 	}
 }

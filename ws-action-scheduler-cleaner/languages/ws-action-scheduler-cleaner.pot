@@ -282,3 +282,35 @@ msgstr ""
 #: includes/class-ajax.php:164
 msgid "Logs retention period is required and must be between 0 and 365 days."
 msgstr ""
+
+#: includes/helpers.php:243
+msgid "Clearing in progress… %s rows deleted so far."
+msgstr ""
+
+#: includes/class-ajax.php:504
+msgid "Cleanup completed successfully!"
+msgstr ""
+
+#: includes/class-ajax.php:37
+msgid "Another cleanup or optimization is already running. Please wait until it finishes."
+msgstr ""
+
+#: includes/class-ajax.php:132
+msgid "An error occurred while clearing actions."
+msgstr ""
+
+#: includes/class-ajax.php:176
+msgid "An error occurred while clearing logs."
+msgstr ""
+
+#: includes/class-ajax.php:476
+msgid "Cleanup progress was lost or is continuing in the background. Refresh the page to check table sizes."
+msgstr ""
+
+#: includes/class-ajax.php:491
+msgid "An error occurred during cleanup."
+msgstr ""
+
+#: includes/class-admin.php:131
+msgid "Retrying…"
+msgstr ""
