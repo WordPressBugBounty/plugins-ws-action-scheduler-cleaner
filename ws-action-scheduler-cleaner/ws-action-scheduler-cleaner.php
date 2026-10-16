@@ -2,12 +2,12 @@
 /**
  * Plugin Name: WS Action Scheduler Cleaner
  * Description: Suffering from database bloat? Try cleaning up the Action Scheduler tables through an easy-to-understand GUI.
- * Version: 1.3.0
+ * Version: 1.3.1
  * Author: Winning Solutions - Nagel & Mäder GbR
  * Author URI: https://www.winning-solutions.de
  * Requires at least: 6.3
  * Requires PHP: 7.4
- * Tested up to: 7.0
+ * Tested up to: 7.1
  * Text Domain: ws-action-scheduler-cleaner
  * Domain Path: /languages
  * License: GPLv2 or later
@@ -29,7 +29,7 @@ $wsacsc_plugin_data = get_file_data(
 	),
 	'plugin'
 );
-define( 'WSACSC_VERSION', ! empty( $wsacsc_plugin_data['Version'] ) ? $wsacsc_plugin_data['Version'] : '1.2.7' );
+define( 'WSACSC_VERSION', ! empty( $wsacsc_plugin_data['Version'] ) ? $wsacsc_plugin_data['Version'] : '1.3.1' );
 
 require_once WSACSC_PLUGIN_DIR . 'includes/helpers.php';
 require_once WSACSC_PLUGIN_DIR . 'includes/class-database.php';

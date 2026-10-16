@@ -41,7 +41,7 @@ if ( class_exists( 'WSACSC_Scheduler' ) ) {
 	WSACSC_Scheduler::winningsolutions_force_clear_cron_hooks( $hook_names );
 } else {
 	foreach ( $hook_names as $hook_name ) {
-		wp_clear_scheduled_hook( $hook_name );
+		wp_unschedule_hook( $hook_name );
 	}
 }
 
@@ -61,18 +61,14 @@ $plugin_options = array(
 	'wsacsc_actions_schedule_time',
 	'wsacsc_logs_schedule_time',
 	'wsacsc_migration_v2_done',
+	'wsacsc_schedule_state',
+	'wsacsc_schedule_lock',
+	'wsacsc_schedule_revision',
 );
 
 foreach ( $plugin_options as $option ) {
 	delete_option( $option );
-	wp_cache_delete( $option, 'options' );
 }
 
-wp_cache_delete( 'alloptions', 'options' );
-wp_cache_delete( 'cron', 'options' );
 wp_cache_delete( 'wsacsc_tables_exist', 'wsacsc' );
 wp_cache_delete( 'wsacsc_table_sizes', 'wsacsc' );
-
-wp_cache_flush_group( 'options' );
-
-wp_cache_flush();

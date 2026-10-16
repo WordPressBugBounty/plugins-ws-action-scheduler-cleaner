@@ -151,6 +151,10 @@ msgstr ""
 msgid "Schedule saved successfully!"
 msgstr ""
 
+#: includes/class-ajax.php:278
+msgid "The settings were saved, but the cleanup schedule could not be updated yet. The plugin will retry automatically."
+msgstr ""
+
 #: ws-action-scheduler-cleaner.php:302
 msgid "Statuses saved successfully!"
 msgstr ""

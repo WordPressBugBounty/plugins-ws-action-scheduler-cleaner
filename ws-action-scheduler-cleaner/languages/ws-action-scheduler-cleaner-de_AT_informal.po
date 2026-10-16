@@ -124,6 +124,9 @@ msgstr "Protokolle erfolgreich bereinigt!"
 msgid "Schedule saved successfully!"
 msgstr "Zeitplan erfolgreich gespeichert!"
 
+msgid "The settings were saved, but the cleanup schedule could not be updated yet. The plugin will retry automatically."
+msgstr "Die Einstellungen wurden gespeichert, aber der Bereinigungszeitplan konnte noch nicht aktualisiert werden. Das Plugin versucht es automatisch erneut."
+
 msgid "Statuses saved successfully!"
 msgstr "Status erfolgreich gespeichert!"
 

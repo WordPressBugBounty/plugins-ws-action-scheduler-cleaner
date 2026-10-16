@@ -249,82 +249,35 @@ class WSACSC_Ajax {
 		foreach ( $options_to_save as $option_name => $value ) {
 			$backup[ $option_name ] = get_option( $option_name, '' );
 		}
-		set_transient( 'wsacsc_save_backup', $backup, HOUR_IN_SECONDS );
 
-		$save_success = false;
-		$max_attempts = 2;
+		update_option( 'wsacsc_actions_schedule_interval', $actions_schedule_interval, 'no' );
+		update_option( 'wsacsc_actions_schedule_time', $actions_schedule_time, 'no' );
+		update_option( 'wsacsc_actions_retention', $actions_retention );
+		update_option( 'wsacsc_logs_schedule_interval', $logs_schedule_interval, 'no' );
+		update_option( 'wsacsc_logs_schedule_time', $logs_schedule_time, 'no' );
+		update_option( 'wsacsc_logs_retention', $logs_retention );
 
-		for ( $attempt = 1; $attempt <= $max_attempts; $attempt++ ) {
-			update_option( 'wsacsc_actions_schedule_interval', $actions_schedule_interval, 'no' );
-			update_option( 'wsacsc_actions_schedule_time', $actions_schedule_time, 'no' );
-			update_option( 'wsacsc_actions_retention', $actions_retention );
-			update_option( 'wsacsc_logs_schedule_interval', $logs_schedule_interval, 'no' );
-			update_option( 'wsacsc_logs_schedule_time', $logs_schedule_time, 'no' );
-			update_option( 'wsacsc_logs_retention', $logs_retention );
-
-			wp_cache_delete( 'wsacsc_actions_schedule_interval', 'options' );
-			wp_cache_delete( 'wsacsc_actions_schedule_time', 'options' );
-			wp_cache_delete( 'wsacsc_actions_retention', 'options' );
-			wp_cache_delete( 'wsacsc_logs_schedule_interval', 'options' );
-			wp_cache_delete( 'wsacsc_logs_schedule_time', 'options' );
-			wp_cache_delete( 'wsacsc_logs_retention', 'options' );
-			wp_cache_delete( 'alloptions', 'options' );
-
-			wp_cache_flush_group( 'options' );
-
-			usleep( 50000 );
-
-			$validation_passed      = true;
-			$actions_interval_check = get_option( 'wsacsc_actions_schedule_interval', '' );
-			$actions_time_check     = get_option( 'wsacsc_actions_schedule_time', '' );
-			$logs_interval_check    = get_option( 'wsacsc_logs_schedule_interval', '' );
-			$logs_time_check        = get_option( 'wsacsc_logs_schedule_time', '' );
-
-			if ( $actions_interval_check !== $actions_schedule_interval ) {
-				$validation_passed = false;
-			}
-			if ( $actions_time_check !== $actions_schedule_time ) {
-				$validation_passed = false;
-			}
-			if ( $logs_interval_check !== $logs_schedule_interval ) {
-				$validation_passed = false;
-			}
-			if ( $logs_time_check !== $logs_schedule_time ) {
-				$validation_passed = false;
-			}
-
-			if ( $validation_passed ) {
-				$save_success = true;
+		// update_option() returns false for unchanged values, so read the values back instead.
+		$schedule_options = array( 'wsacsc_actions_schedule_interval', 'wsacsc_actions_schedule_time', 'wsacsc_logs_schedule_interval', 'wsacsc_logs_schedule_time' );
+		$save_success     = true;
+		foreach ( $schedule_options as $option_name ) {
+			if ( (string) get_option( $option_name, '' ) !== (string) $options_to_save[ $option_name ] ) {
+				$save_success = false;
 				break;
-			}
-
-			if ( $attempt < $max_attempts ) {
-				wp_cache_delete( 'wsacsc_actions_schedule_interval', 'options' );
-				wp_cache_delete( 'wsacsc_actions_schedule_time', 'options' );
-				wp_cache_delete( 'wsacsc_logs_schedule_interval', 'options' );
-				wp_cache_delete( 'wsacsc_logs_schedule_time', 'options' );
-				wp_cache_delete( 'alloptions', 'options' );
 			}
 		}
 
 		if ( ! $save_success ) {
-			$backup_restore = get_transient( 'wsacsc_save_backup' );
-			if ( false !== $backup_restore && is_array( $backup_restore ) ) {
-				foreach ( $backup_restore as $option_name => $value ) {
-					update_option( $option_name, $value, 'no' );
-				}
-				wp_cache_delete( 'alloptions', 'options' );
+			foreach ( $backup as $option_name => $value ) {
+				update_option( $option_name, $value, 'no' );
 			}
-			delete_transient( 'wsacsc_save_backup' );
 			wp_send_json_error( array( 'message' => __( 'Failed to save schedule. Please try again.', 'ws-action-scheduler-cleaner' ) ) );
 		}
 
-		delete_transient( 'wsacsc_save_backup' );
+		if ( ! WSACSC_Scheduler::apply_schedule_configuration() ) {
+			wp_send_json_error( array( 'message' => __( 'The settings were saved, but the cleanup schedule could not be updated yet. The plugin will retry automatically.', 'ws-action-scheduler-cleaner' ) ) );
+		}
 
-		WSACSC_Scheduler::winningsolutions_cleanup_broken_hooks( array( 'wsacsc_cleanup_logs', 'wsacsc_cleanup_actions' ) );
-
-		WSACSC_Scheduler::maybe_schedule_cleanup();
-		WSACSC_Scheduler::verify_cron_health();
 		wp_send_json_success( array( 'message' => __( 'Schedule saved successfully!', 'ws-action-scheduler-cleaner' ) ) );
 	}
 
@@ -349,9 +302,6 @@ class WSACSC_Ajax {
 		}
 
 		update_option( 'wsacsc_selected_statuses', $statuses );
-
-		wp_cache_delete( 'wsacsc_selected_statuses', 'options' );
-		wp_cache_delete( 'alloptions', 'options' );
 
 		wp_send_json_success( array( 'message' => __( 'Statuses saved successfully!', 'ws-action-scheduler-cleaner' ) ) );
 	}

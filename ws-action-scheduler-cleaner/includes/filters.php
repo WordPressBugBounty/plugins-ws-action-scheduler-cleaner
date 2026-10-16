@@ -45,7 +45,6 @@ function wsacsc_increase_queue_runner_time_limit( $time_limit ): int {
  * @return bool True if plugin's scheduled cleanup is active
  */
 function wsacsc_is_plugin_schedule_active(): bool {
-	wp_cache_delete( 'wsacsc_actions_schedule_interval', 'options' );
 	$actions_schedule_interval = get_option( 'wsacsc_actions_schedule_interval', '' );
 
 	if ( ! empty( $actions_schedule_interval ) && ctype_digit( (string) $actions_schedule_interval ) ) {
@@ -69,7 +68,6 @@ function wsacsc_change_retention_period( $default_retention_period ): int {
 		return PHP_INT_MAX;
 	}
 
-	wp_cache_delete( 'wsacsc_actions_retention', 'options' );
 	$retention_days_option = get_option( 'wsacsc_actions_retention', '30' );
 	if ( $retention_days_option === '' || ! ctype_digit( (string) $retention_days_option ) ) {
 		return $default_retention_period;
@@ -88,7 +86,6 @@ function wsacsc_change_retention_period( $default_retention_period ): int {
  * @return array
  */
 function wsacsc_set_cleaner_statuses( $default_statuses ): array {
-	wp_cache_delete( 'wsacsc_selected_statuses', 'options' );
 	$selected_statuses_option = get_option( 'wsacsc_selected_statuses', array( 'complete', 'failed', 'canceled' ) );
 	if ( ! is_array( $selected_statuses_option ) ) {
 		$selected_statuses_option = array( 'complete', 'failed', 'canceled' );

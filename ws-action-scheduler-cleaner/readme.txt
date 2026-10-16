@@ -2,8 +2,8 @@
 Contributors: winningsolutions
 Donate link: https://www.winning-solutions.de
 Requires at least: 6.3
-Tested up to: 7.0
-Stable tag: 1.3.0
+Tested up to: 7.1
+Stable tag: 1.3.1
 Requires PHP: 7.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -56,6 +56,10 @@ Requires WordPress 6.3 or newer and PHP 7.4 or newer (compatible with PHP 8.5).
 
 Action Scheduler only shows status tabs when at least one action has that status in the database. This plugin does not remove or hide those tabs. If Complete or Failed never appear, there may be no rows with those statuses—common when millions of actions are stuck in pending and the queue cannot catch up. Cleanup Schedule (how often the plugin runs) is not the same as Retention Period (how old finished actions must be before deletion). Retention uses completion or last attempt time, matching Action Scheduler's built-in cleaner.
 
+= Why does the scheduled cleanup run one hour earlier or later after a daylight saving time change? =
+
+WP-Cron repeats an event after a fixed number of seconds, not at a fixed clock time. The time of day you set applies to the first run. After a daylight saving time change, the local run time moves by one hour. To set the time of day again, save the cleanup schedule with a different time.
+
 = What is the difference between Cleanup Schedule and Retention Period? =
 
 Cleanup Schedule sets how often this plugin's scheduled cleanup runs (1–365 days, or disabled). Retention Period sets the age threshold for deleting finished actions you selected. When a cleanup schedule is enabled, Action Scheduler's own continuous cleanup is turned off to prevent double deletion.
@@ -75,6 +79,12 @@ For best results, we recommend setting up an automatic clearing schedule to main
 1. The plugin's user interface.
 
 == Changelog ==
+
+= 2026-10-15: 1.3.1 =
+* **Fix high Redis and object cache load**: The plugin no longer checks and repairs its cron events on every page request. In 1.3.0, this check could flush the whole `options` cache group several times per second. With Redis Object Cache, each flush scans the full Redis keyspace, so Redis could reach 100% CPU.
+* **Fix scheduled cleanup without a time of day**: When no time of day was set, the next run moved forward on every check, so the scheduled cleanup never ran. Existing valid events now keep their next run time.
+* **Safer scheduling**: All changes to the plugin cron events go through one lock and the public WP-Cron functions. A failed attempt waits 5 minutes before the next attempt.
+* **No full cache flush on uninstall**: Uninstalling the plugin no longer empties the whole object cache.
 
 = 2026-05-25: 1.3.0 =
 * **More reliable cleanup performance**: Manual AJAX cleanup now uses time-bounded chunks with progress saved after each batch; scheduled cron uses gentler defaults.
@@ -130,6 +140,9 @@ For best results, we recommend setting up an automatic clearing schedule to main
 * Initial release.
 
 == Upgrade Notice ==
+
+= 1.3.1 =
+* Fixes very high Redis CPU load caused by repeated cache group flushes, and scheduled cleanups that never ran when no time of day was set. Recommended for all users, especially sites with a persistent object cache.
 
 = 1.3.0 =
 * More reliable cleanup on large Action Scheduler tables: time-bounded chunks, saved progress, and a global lock to prevent overlapping clear/optimize jobs. Scheduled cleanup may auto-optimize small tables after retention runs. Recommended for all users; especially sites with larges tables or custom tuning via the new developer filters.

@@ -739,7 +739,6 @@ class WSACSC_Cleanup {
 		$original_settings = self::increase_php_limits();
 
 		try {
-			wp_cache_delete( 'wsacsc_logs_retention', 'options' );
 			$retention_days_option = get_option( 'wsacsc_logs_retention', '30' );
 			if ( $retention_days_option === '' || ! ctype_digit( (string) $retention_days_option ) ) {
 				return;
@@ -787,14 +786,12 @@ class WSACSC_Cleanup {
 		$original_settings = self::increase_php_limits();
 
 		try {
-			wp_cache_delete( 'wsacsc_actions_retention', 'options' );
 			$retention_days_option = get_option( 'wsacsc_actions_retention', '30' );
 			if ( $retention_days_option === '' || ! ctype_digit( (string) $retention_days_option ) ) {
 				return;
 			}
 			$retention_days = absint( $retention_days_option );
 
-			wp_cache_delete( 'wsacsc_selected_statuses', 'options' );
 			$selected_statuses_option = get_option( 'wsacsc_selected_statuses', array( 'complete', 'failed', 'canceled' ) );
 			if ( ! is_array( $selected_statuses_option ) ) {
 				$selected_statuses_option = array( 'complete', 'failed', 'canceled' );

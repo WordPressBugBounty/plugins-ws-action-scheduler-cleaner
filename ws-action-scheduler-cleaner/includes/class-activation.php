@@ -95,19 +95,18 @@ class WSACSC_Activation {
 			'wsacsc_actions_schedule_time',
 			'wsacsc_logs_schedule_time',
 			'wsacsc_migration_v2_done',
+			WSACSC_Scheduler::STATE_OPTION,
+			WSACSC_Scheduler::LOCK_OPTION,
+			// Last: deleting the schedule options above writes a new revision.
+			WSACSC_Scheduler::REVISION_OPTION,
 		);
 
 		foreach ( $plugin_options as $option ) {
 			delete_option( $option );
-			wp_cache_delete( $option, 'options' );
 		}
 
-		wp_cache_delete( 'alloptions', 'options' );
-		wp_cache_delete( 'cron', 'options' );
 		wp_cache_delete( 'wsacsc_tables_exist', 'wsacsc' );
 		wp_cache_delete( 'wsacsc_table_sizes', 'wsacsc' );
-
-		wp_cache_flush_group( 'options' );
 	}
 
 	/**
@@ -146,10 +145,8 @@ class WSACSC_Activation {
 
 		foreach ( $backup as $option_name => $value ) {
 			update_option( $option_name, $value, 'no' );
-			wp_cache_delete( $option_name, 'options' );
 		}
 
-		wp_cache_delete( 'alloptions', 'options' );
 		delete_transient( 'wsacsc_migration_backup' );
 
 		return true;
@@ -157,66 +154,16 @@ class WSACSC_Activation {
 
 	/**
 	 * Detect and migrate old cron hook patterns
+	 *
+	 * Removes entries with unknown or invalid schedules from the plugin hooks.
+	 * The scheduler removes them one by one through the public cron API, under its lock.
 	 */
 	private static function detect_old_cron_hooks(): void {
 		if ( ! class_exists( 'WSACSC_Scheduler' ) ) {
 			return;
 		}
 
-		$cron = _get_cron_array();
-		if ( false === $cron || empty( $cron ) ) {
-			return;
-		}
-
-		$hook_names      = array( 'wsacsc_cleanup_logs', 'wsacsc_cleanup_actions' );
-		$valid_intervals = array( 'hourly', 'twicedaily', 'daily', 'weekly' );
-		$modified        = false;
-
-		foreach ( $hook_names as $hook_name ) {
-			foreach ( $cron as $timestamp => $cronhooks ) {
-				if ( ! isset( $cronhooks[ $hook_name ] ) ) {
-					continue;
-				}
-
-				foreach ( $cronhooks[ $hook_name ] as $key => $hook ) {
-					if ( ! isset( $hook['schedule'] ) ) {
-						continue;
-					}
-
-					$schedule = $hook['schedule'];
-
-					if ( in_array( $schedule, $valid_intervals, true ) ) {
-						continue;
-					}
-
-					if ( strpos( $schedule, 'wsacsc_every_' ) === 0 ) {
-						$days_str = str_replace( 'wsacsc_every_', '', str_replace( '_days', '', $schedule ) );
-						if ( ctype_digit( $days_str ) ) {
-							$days = (int) $days_str;
-							if ( $days >= 1 && $days <= 365 ) {
-								continue;
-							}
-						}
-					}
-
-					unset( $cron[ $timestamp ][ $hook_name ][ $key ] );
-					$modified = true;
-
-					if ( empty( $cron[ $timestamp ][ $hook_name ] ) ) {
-						unset( $cron[ $timestamp ][ $hook_name ] );
-					}
-					if ( empty( $cron[ $timestamp ] ) ) {
-						unset( $cron[ $timestamp ] );
-					}
-				}
-			}
-		}
-
-		if ( $modified ) {
-			_set_cron_array( $cron );
-			wp_cache_delete( 'cron', 'options' );
-			wp_cache_delete( 'alloptions', 'options' );
-		}
+		WSACSC_Scheduler::winningsolutions_cleanup_broken_hooks( array( 'wsacsc_cleanup_logs', 'wsacsc_cleanup_actions' ) );
 	}
 
 	/**
@@ -302,11 +249,12 @@ class WSACSC_Activation {
 			}
 			update_option( 'wsacsc_logs_schedule_time', $logs_schedule_time, 'no' );
 
+			// The read-back below compares with the string values from the database, so drop the
+			// typed values that update_option() cached for these four non-autoloaded options.
 			wp_cache_delete( 'wsacsc_actions_schedule_interval', 'options' );
 			wp_cache_delete( 'wsacsc_logs_schedule_interval', 'options' );
 			wp_cache_delete( 'wsacsc_actions_schedule_time', 'options' );
 			wp_cache_delete( 'wsacsc_logs_schedule_time', 'options' );
-			wp_cache_delete( 'alloptions', 'options' );
 
 			$validation_passed      = true;
 			$actions_interval_check = get_option( 'wsacsc_actions_schedule_interval', '' );
@@ -329,12 +277,9 @@ class WSACSC_Activation {
 			}
 
 			update_option( 'wsacsc_migration_v2_done', true, 'no' );
-			wp_cache_delete( 'wsacsc_migration_v2_done', 'options' );
 
 			if ( class_exists( 'WSACSC_Scheduler' ) ) {
-				WSACSC_Scheduler::winningsolutions_cleanup_broken_hooks( array( 'wsacsc_cleanup_logs', 'wsacsc_cleanup_actions' ) );
 				WSACSC_Scheduler::maybe_schedule_cleanup();
-				WSACSC_Scheduler::verify_cron_health();
 			}
 
 			if ( $backup_created ) {
