@@ -1,3 +1,0 @@
-# Files excluded from release ZIP packages (WordPress.org / manual distribution).
-wsacsc-populate-test-data.php
-.distignore
